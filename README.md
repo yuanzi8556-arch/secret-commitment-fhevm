@@ -50,105 +50,123 @@ pnpm sdk:build
 | 💚 **Vue** | `pnpm --filter vue-showcase dev` | 3003 | CDN Script | Vue with CDN |
 | 🖥️ **Node.js** | `pnpm --filter node-showcase start` | CLI | Mock | Server-side demo |
 
-## 🔧 **FHEVM Loading Options**
+## 🔧 **How FHEVM Loading Works**
 
-### **Option 1: CDN Script (Recommended)**
-All showcases use this approach - add the script tag to your HTML:
+### **CDN Script Approach (Used by All Showcases)**
+All showcases use the Zama Relayer SDK CDN:
 
 ```html
-<!-- Add this to your HTML <head> or <body> -->
+<!-- This script is already included in all showcases -->
 <script
   src="https://cdn.zama.ai/relayer-sdk-js/0.2.0/relayer-sdk-js.umd.cjs"
   type="text/javascript"
 ></script>
 ```
 
-**Advantages:**
-- ✅ No bundling issues
-- ✅ Works with all frameworks
-- ✅ Automatic loading
-- ✅ No webpack conflicts
-
-### **Option 2: NPM Package (Advanced)**
-For advanced users who want to bundle the SDK:
-
-```bash
-npm install @zama-fhe/relayer-sdk
-```
-
-**Note:** This can cause webpack/bundling issues in some frameworks.
-
-### **How It Works**
+**What happens:**
 1. **CDN Script** loads `window.RelayerSDK` globally
 2. **Universal SDK** detects and uses the global instance
 3. **No configuration needed** - works out of the box
 
-## 🎯 **Developer Options**
+### **Why This Approach Works**
+- ✅ **No bundling issues** - CDN loads separately
+- ✅ **Works with all frameworks** - React, Next.js, Vue, Vanilla JS
+- ✅ **No webpack conflicts** - Script loads before app
+- ✅ **Automatic detection** - Universal SDK finds the global instance
 
-### **For New Projects**
+## 🎯 **Developer Workflow**
+
+### **Clone and Start Building**
 ```bash
-# 1. Install the Universal SDK
-npm install @fhevm-sdk
+# 1. Clone the repository
+git clone https://github.com/your-username/fhevm-react-template.git
+cd fhevm-react-template
 
-# 2. Add CDN script to your HTML
-<script src="https://cdn.zama.ai/relayer-sdk-js/0.2.0/relayer-sdk-js.umd.cjs"></script>
+# 2. Install all dependencies
+pnpm install
 
-# 3. Use the hooks in your components
-import { useWallet, useFhevm, useContract, useFhevmOperations } from '@fhevm-sdk'
+# 3. Build the Universal SDK
+pnpm sdk:build
+
+# 4. Choose your development environment
 ```
 
-### **For Existing Projects**
+### **Development Environments**
+
+Each showcase is a complete development environment ready to use:
+
+| Environment | Location | Command | Port | What You Get |
+|-------------|----------|---------|------|--------------|
+| ⚛️ **React App** | `packages/react-showcase/` | `pnpm --filter react-showcase start` | 3000 | Full React app with FHEVM |
+| 🚀 **Next.js App** | `packages/nextjs-showcase/` | `pnpm --filter nextjs-showcase dev` | 3001 | Full Next.js app with FHEVM |
+| 💚 **Vue App** | `packages/vue-showcase/` | `pnpm --filter vue-showcase dev` | 3003 | Full Vue app with FHEVM |
+| 🖥️ **Node.js CLI** | `packages/node-showcase/` | `pnpm --filter node-showcase start` | CLI | Node.js FHEVM demo |
+| 🔧 **SDK Package** | `packages/fhevm-sdk/` | `pnpm --filter fhevm-sdk build` | N/A | Universal FHEVM SDK |
+
+### **How Each Environment Works**
+
+#### **⚛️ React Development Environment**
 ```bash
-# Option A: CDN Approach (Recommended)
-# Just add the script tag and import the SDK
+# Location: packages/react-showcase/
+cd packages/react-showcase
+pnpm start  # Starts React app on http://localhost:3000
 
-# Option B: NPM Approach (Advanced)
-npm install @zama-fhe/relayer-sdk @fhevm-sdk
-# Then configure webpack/bundler to handle the SDK
+# What's included:
+# - Complete React app with FHEVM integration
+# - CDN script already in public/index.html
+# - Universal SDK already imported
+# - Ready to edit and develop
 ```
 
-### **Framework-Specific Setup**
+#### **🚀 Next.js Development Environment**
+```bash
+# Location: packages/nextjs-showcase/
+cd packages/nextjs-showcase
+pnpm dev  # Starts Next.js app on http://localhost:3001
 
-#### **React (Create React App)**
-```html
-<!-- public/index.html -->
-<script src="https://cdn.zama.ai/relayer-sdk-js/0.2.0/relayer-sdk-js.umd.cjs"></script>
+# What's included:
+# - Complete Next.js app with FHEVM integration
+# - CDN script in app/layout.tsx
+# - Universal SDK already imported
+# - Ready to edit and develop
 ```
 
-#### **Next.js**
-```tsx
-// app/layout.tsx
-import Script from 'next/script'
+#### **💚 Vue Development Environment**
+```bash
+# Location: packages/vue-showcase/
+cd packages/vue-showcase
+pnpm dev  # Starts Vue app on http://localhost:3003
 
-export default function RootLayout({ children }) {
-  return (
-    <html>
-      <body>
-        <Script
-          src="https://cdn.zama.ai/relayer-sdk-js/0.2.0/relayer-sdk-js.umd.cjs"
-          strategy="beforeInteractive"
-        />
-        {children}
-      </body>
-    </html>
-  )
-}
+# What's included:
+# - Complete Vue app with FHEVM integration
+# - CDN script already in index.html
+# - Universal SDK already imported
+# - Ready to edit and develop
 ```
 
-#### **Vue**
-```html
-<!-- index.html -->
-<script src="https://cdn.zama.ai/relayer-sdk-js/0.2.0/relayer-sdk-js.umd.cjs"></script>
+#### **🖥️ Node.js Development Environment**
+```bash
+# Location: packages/node-showcase/
+cd packages/node-showcase
+pnpm start  # Runs Node.js FHEVM demo
+
+# What's included:
+# - Complete Node.js FHEVM demonstration
+# - Mock FHEVM implementation
+# - Ready to edit and develop
 ```
 
-#### **Vanilla JS**
-```html
-<!-- index.html -->
-<script src="https://cdn.zama.ai/relayer-sdk-js/0.2.0/relayer-sdk-js.umd.cjs"></script>
-<script type="module">
-  import { FhevmVanilla } from '@fhevm-sdk'
-  // Use the SDK...
-</script>
+#### **🔧 SDK Development Environment**
+```bash
+# Location: packages/fhevm-sdk/
+cd packages/fhevm-sdk
+pnpm build  # Builds the Universal SDK
+
+# What's included:
+# - Universal FHEVM SDK source code
+# - Framework adapters (React, Vue, Node.js, Vanilla)
+# - Core FHEVM functionality
+# - Ready to edit and develop
 ```
 
 ## 🎯 **Framework Examples**
