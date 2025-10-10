@@ -264,138 +264,183 @@ function App() {
   };
 
   return (
-    <div className="app">
+    <div className="min-h-screen bg-zama-black text-white font-system">
       {/* FHEVM Header */}
-      <header className="header">
-        <div className="header-content">
-          <h1 className="app-title">Universal FHEVM SDK - React Showcase</h1>
+      <header className="bg-zama-yellow py-6 border-b border-zama-black z-50">
+        <div className="max-w-6xl mx-auto px-8 text-center">
+          <h1 className="text-zama-black text-2xl font-bold m-0">Universal FHEVM SDK - React Showcase</h1>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="main-content">
-        <div className="container">
+      <main className="bg-zama-black min-h-[calc(100vh-120px)] py-8">
+        <div className="max-w-6xl mx-auto px-8">
           
           {/* FHEVM Status */}
-          <div className="section">
-            <div className="section-header">
-              <h2>FHEVM Status</h2>
-              <span className="status-badge" data-status={fhevmStatus}>{fhevmStatus.toUpperCase()}</span>
+          <div className="zama-section">
+            <div className="zama-section-header">
+              <h2 className="zama-title">FHEVM Status</h2>
+              <span className={`zama-status-badge ${fhevmStatus === 'ready' ? 'zama-status-ready' : fhevmStatus === 'error' ? 'zama-status-error' : fhevmStatus === 'loading' ? 'zama-status-loading' : 'zama-status-idle'}`}>
+                {fhevmStatus.toUpperCase()}
+              </span>
             </div>
-            <div className="section-content">
-              {fhevmError && <p className="error">Error: {fhevmError}</p>}
-              {fhevmStatus === 'ready' && <p className="success">FHEVM Ready</p>}
+            <div className="zama-section-content">
+              {fhevmError && <p className="zama-error">Error: {fhevmError}</p>}
+              {fhevmStatus === 'ready' && <p className="zama-success">FHEVM Ready</p>}
             </div>
           </div>
 
-          {/* Wallet Connection */}
-          <div className="section">
-            <div className="section-header">
-              <h2>Wallet Connection</h2>
-              {!isConnected ? (
-                <button onClick={connectWallet} className="connect-btn-header">
-                  Connect Wallet
-                </button>
-              ) : (
-                <button onClick={() => {
-                  setAccount('');
-                  setChainId(0);
-                  setIsConnected(false);
-                  setCountHandle('');
-                  setDecryptedCount(null);
-                  setFhevmStatus('idle');
-                  setFhevmError('');
-                  setMessage('');
-                }} className="disconnect-btn-header">
-                  <svg className="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 18l6-6-6-6"/>
-                  </svg>
-                  Disconnect
-                </button>
-              )}
+          {/* Wallet Connection and SDK Info Side by Side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+            {/* Wallet Connection */}
+            <div className="zama-section">
+              <div className="zama-section-header">
+                <h2 className="zama-title">Wallet Connection</h2>
+                {!isConnected ? (
+                  <button onClick={connectWallet} className="zama-btn zama-btn-warning">
+                    Connect Wallet
+                  </button>
+                ) : (
+                  <button onClick={() => {
+                    setAccount('');
+                    setChainId(0);
+                    setIsConnected(false);
+                    setCountHandle('');
+                    setDecryptedCount(null);
+                    setFhevmStatus('idle');
+                    setFhevmError('');
+                    setMessage('');
+                  }} className="zama-btn zama-btn-danger">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                    Disconnect
+                  </button>
+                )}
+              </div>
+              <div className="p-4">
+                {!isConnected ? (
+                  <div className="text-center py-4">
+                    <p className="text-zama-gray-100">Connect your wallet to use FHEVM features</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-2">
+                    <div className="zama-info-item">
+                      <span className="zama-label">Status:</span>
+                      <span className="zama-success">Connected</span>
+                    </div>
+                    <div className="zama-info-item">
+                      <span className="zama-label">Address:</span>
+                      <span className="zama-address">{account}</span>
+                    </div>
+                    <div className="zama-info-item">
+                      <span className="zama-label">Chain ID:</span>
+                      <span className="zama-value">{chainId}</span>
+                    </div>
+                    <div className="zama-info-item">
+                      <span className="zama-label">Contract:</span>
+                      <span className="zama-address">{contractAddress}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="section-content">
-              {!isConnected ? (
-                <div className="connection-prompt">
-                  <p>Connect your wallet to use FHEVM features</p>
+
+            {/* SDK Info */}
+            <div className="zama-section">
+              <div className="zama-section-header">
+                <h2 className="zama-title">Universal FHEVM SDK</h2>
+                <p className="zama-subtitle">React compatible implementation</p>
+              </div>
+              <div className="p-4">
+                <div className="grid gap-2 mb-4">
+                  <div className="flex items-center gap-3 p-2 bg-zama-black rounded-lg border border-zama-gray-400">
+                    <span className="text-zama-green font-bold text-lg">✓</span>
+                    <span className="text-zama-gray-100 text-sm">React compatible FHEVM</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-2 bg-zama-black rounded-lg border border-zama-gray-400">
+                    <span className="text-zama-green font-bold text-lg">✓</span>
+                    <span className="text-zama-gray-100 text-sm">No webpack bundling issues</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-2 bg-zama-black rounded-lg border border-zama-gray-400">
+                    <span className="text-zama-green font-bold text-lg">✓</span>
+                    <span className="text-zama-gray-100 text-sm">Real contract interactions</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-2 bg-zama-black rounded-lg border border-zama-gray-400">
+                    <span className="text-zama-green font-bold text-lg">✓</span>
+                    <span className="text-zama-gray-100 text-sm">Framework-agnostic core</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-2 bg-zama-black rounded-lg border border-zama-gray-400">
+                    <span className="text-zama-green font-bold text-lg">✓</span>
+                    <span className="text-zama-gray-100 text-sm">Works in React, Next.js, Vue</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-2 bg-zama-black rounded-lg border border-zama-gray-400">
+                    <span className="text-zama-green font-bold text-lg">✓</span>
+                    <span className="text-zama-gray-100 text-sm">Clean, simple API</span>
+                  </div>
                 </div>
-              ) : (
-                <div className="connection-info">
-                  <div className="info-item">
-                    <span className="label">Status:</span>
-                    <span className="success">Connected</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="label">Address:</span>
-                    <span className="address">{account}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="label">Chain ID:</span>
-                    <span className="value">{chainId}</span>
-                  </div>
-                  <div className="info-item">
-                    <span className="label">Contract:</span>
-                    <span className="contract">{contractAddress}</span>
-                  </div>
+                <div className="text-zama-gray-200 text-xs p-3 bg-zama-black rounded-lg border border-zama-gray-400">
+                  <strong>Note:</strong> This is a demonstration using REAL FHEVM SDK from Zama's CDN. 
+                  The SDK provides actual encryption/decryption functionality on Sepolia testnet.
                 </div>
-              )}
+              </div>
             </div>
           </div>
 
           {/* Main Content Grid */}
-          <div className="main-grid">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
             {/* FHEVM Counter Demo */}
             {isConnected && fhevmStatus === 'ready' && (
-              <div className="section">
-                <div className="section-header">
-                  <h2>FHEVM Counter Demo</h2>
-                  <p className="subtitle">Using REAL FHEVM SDK on Sepolia testnet</p>
+              <div className="zama-section">
+                <div className="zama-section-header">
+                  <h2 className="zama-title">FHEVM Counter Demo</h2>
+                  <p className="zama-subtitle">Using REAL FHEVM SDK on Sepolia testnet</p>
                 </div>
-                <div className="section-content">
-                  <div className="demo-controls">
-                    <div className="control-group">
-                      <button onClick={getCount} className="btn btn-primary">
-                        <svg className="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <div className="zama-section-content">
+                  <div className="flex flex-col gap-8">
+                    <div className="flex flex-col gap-4">
+                      <button onClick={getCount} className="zama-btn zama-btn-primary">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M3 3v18h18"/>
                           <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
                         </svg>
                         Get Count
                       </button>
                       {countHandle && (
-                        <div className="handle-display">
-                          <span className="label">Handle:</span>
-                          <span className="handle">{countHandle}</span>
+                        <div className="p-4 bg-zama-black rounded-lg border border-zama-gray-400 flex flex-col gap-2">
+                          <span className="zama-label">Handle:</span>
+                          <span className="zama-handle">{countHandle}</span>
                         </div>
                       )}
                     </div>
 
-                    <div className="control-group">
+                    <div className="flex flex-col gap-4">
                       <button 
                         onClick={handleDecrypt} 
                         disabled={!countHandle}
-                        className="btn btn-success"
+                        className="zama-btn zama-btn-success"
                       >
-                        <svg className="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
                           <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                         </svg>
                         Decrypt Count
                       </button>
                       {decryptedCount !== null && (
-                        <div className="result-display">
-                          <span className="label">Decrypted Count:</span>
-                          <span className="result">{decryptedCount}</span>
+                        <div className="p-4 bg-zama-black rounded-lg border border-zama-gray-400 flex flex-col gap-2">
+                          <span className="zama-label">Decrypted Count:</span>
+                          <span className="zama-result">{decryptedCount}</span>
                         </div>
                       )}
                     </div>
 
-                    <div className="control-group">
+                    <div className="flex flex-col gap-4">
                       <button 
                         onClick={incrementCounter} 
                         disabled={isProcessing}
-                        className="btn btn-warning"
+                        className="zama-btn zama-btn-warning"
                       >
-                        <svg className="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M5 12h14"/>
                           <path d="M12 5v14"/>
                         </svg>
@@ -404,9 +449,9 @@ function App() {
                       <button 
                         onClick={decrementCounter} 
                         disabled={isProcessing}
-                        className="btn btn-danger"
+                        className="zama-btn zama-btn-danger"
                       >
-                        <svg className="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M5 12h14"/>
                         </svg>
                         Decrement
@@ -414,7 +459,7 @@ function App() {
                     </div>
 
                     {message && (
-                      <div className="message">
+                      <div className="zama-message">
                         {message}
                       </div>
                     )}
@@ -425,32 +470,32 @@ function App() {
 
             {/* Public Decryption Demo */}
             {fhevmStatus === 'ready' && (
-              <div className="section">
-                <div className="section-header">
-                  <h2>Public Decryption Demo</h2>
-                  <p className="subtitle">Testing public decryption with hardcoded ciphertexts</p>
+              <div className="zama-section">
+                <div className="zama-section-header">
+                  <h2 className="zama-title">Public Decryption Demo</h2>
+                  <p className="zama-subtitle">Testing public decryption with hardcoded ciphertexts</p>
                 </div>
-                <div className="section-content">
-                  <div className="demo-controls">
+                <div className="zama-section-content">
+                  <div className="flex flex-col gap-8">
                     {/* Show ciphertexts initially */}
-                    <div className="control-group">
-                      <div className="handle-display">
-                        <span className="label">Encrypted Count Ciphertext:</span>
-                        <span className="handle">{HARDCODED_CIPHERTEXTS.encryptedCount}</span>
+                    <div className="flex flex-col gap-4">
+                      <div className="p-4 bg-zama-black rounded-lg border border-zama-gray-400 flex flex-col gap-2">
+                        <span className="zama-label">Encrypted Count Ciphertext:</span>
+                        <span className="zama-handle">{HARDCODED_CIPHERTEXTS.encryptedCount}</span>
                       </div>
-                      <div className="handle-display">
-                        <span className="label">Encrypted Sum Ciphertext:</span>
-                        <span className="handle">{HARDCODED_CIPHERTEXTS.encryptedSum}</span>
+                      <div className="p-4 bg-zama-black rounded-lg border border-zama-gray-400 flex flex-col gap-2">
+                        <span className="zama-label">Encrypted Sum Ciphertext:</span>
+                        <span className="zama-handle">{HARDCODED_CIPHERTEXTS.encryptedSum}</span>
                       </div>
                     </div>
 
-                    <div className="control-group">
+                    <div className="flex flex-col gap-4">
                       <button 
                         onClick={handlePublicDecrypt}
                         disabled={isPublicDecrypting}
-                        className="btn btn-primary"
+                        className="zama-btn zama-btn-primary"
                       >
-                        <svg className="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
                           <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                         </svg>
@@ -460,22 +505,34 @@ function App() {
 
                     {/* Show decrypted results only after clicking */}
                     {(publicDecryptedCount !== null || publicDecryptedSum !== null) && (
-                      <div className="result-display">
-                        <h3 style={{ color: '#ffd208', margin: '0 0 10px 0' }}>Public Decryption Results:</h3>
+                      <div className="p-4 bg-zama-black rounded-lg border border-zama-gray-400 flex flex-col gap-4">
+                        <h3 className="text-zama-yellow text-lg font-semibold mb-2">Public Decryption Results:</h3>
                         {publicDecryptedCount !== null && (
-                          <div className="info-item">
-                            <span className="label">Decrypted Count:</span>
-                            <span className="result">{publicDecryptedCount}</span>
+                          <div className="zama-info-item">
+                            <span className="zama-label">Decrypted Count:</span>
+                            <span className="zama-result">{publicDecryptedCount}</span>
                           </div>
                         )}
                         {publicDecryptedSum !== null && (
-                          <div className="info-item">
-                            <span className="label">Decrypted Sum:</span>
-                            <span className="result">{publicDecryptedSum}</span>
+                          <div className="zama-info-item">
+                            <span className="zama-label">Decrypted Sum:</span>
+                            <span className="zama-result">{publicDecryptedSum}</span>
                           </div>
                         )}
-                        <div className="note">
+                        <div className="text-zama-gray-200 text-sm mt-2">
                           These values were decrypted using public decryption (no user signature required)
+                        </div>
+                        <div className="text-zama-gray-200 text-xs mt-3 p-3 bg-zama-black rounded-lg border border-zama-gray-400">
+                          <strong>Source:</strong> The encrypted count and sum ciphertexts are from the{' '}
+                          <a 
+                            href="https://sepolia.etherscan.io/address/0xb218c0a83fb718683ddbf97b56e01df3de3bfcf3#code" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-zama-yellow hover:text-yellow-400 underline"
+                          >
+                            FReviewCardsFHE.sol contract
+                          </a>
+                          {' '}on Sepolia. These ciphertexts are publicly decryptable, demonstrating the public decryption functionality.
                         </div>
                       </div>
                     )}
@@ -483,46 +540,6 @@ function App() {
                 </div>
               </div>
             )}
-
-            {/* SDK Info */}
-            <div className="section">
-              <div className="section-header">
-                <h2>Universal FHEVM SDK</h2>
-                <p className="subtitle">React compatible implementation</p>
-              </div>
-              <div className="section-content">
-                <div className="features-list">
-                  <div className="feature-item">
-                    <span className="checkmark">✓</span>
-                    <span>React compatible FHEVM</span>
-                  </div>
-                  <div className="feature-item">
-                    <span className="checkmark">✓</span>
-                    <span>No webpack bundling issues</span>
-                  </div>
-                  <div className="feature-item">
-                    <span className="checkmark">✓</span>
-                    <span>Real contract interactions</span>
-                  </div>
-                  <div className="feature-item">
-                    <span className="checkmark">✓</span>
-                    <span>Framework-agnostic core</span>
-                  </div>
-                  <div className="feature-item">
-                    <span className="checkmark">✓</span>
-                    <span>Works in React, Next.js, Vue</span>
-                  </div>
-                  <div className="feature-item">
-                    <span className="checkmark">✓</span>
-                    <span>Clean, simple API</span>
-                  </div>
-                </div>
-                <div className="note">
-                  <strong>Note:</strong> This is a demonstration using REAL FHEVM SDK from Zama's CDN. 
-                  The SDK provides actual encryption/decryption functionality on Sepolia testnet.
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </main>

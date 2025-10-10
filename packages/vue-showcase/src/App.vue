@@ -23,40 +23,83 @@
           </div>
         </div>
 
-        <!-- Wallet Connection -->
-        <div class="section">
-          <div class="section-header">
-            <h2>Wallet Connection</h2>
-            <button v-if="!isConnected" @click="connectWallet" class="connect-btn-header">
-              Connect Wallet
-            </button>
-            <button v-else @click="disconnectWallet" class="disconnect-btn-header">
-              <svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 18l6-6-6-6"/>
-              </svg>
-              Disconnect
-            </button>
-          </div>
-          <div class="section-content">
-            <div v-if="!isConnected" class="connection-prompt">
-              <p>Connect your wallet to use FHEVM features</p>
+        <!-- Wallet Connection and SDK Info Side by Side -->
+        <div class="main-grid">
+          <!-- Wallet Connection -->
+          <div class="section">
+            <div class="section-header">
+              <h2>Wallet Connection</h2>
+              <button v-if="!isConnected" @click="connectWallet" class="connect-btn-header">
+                Connect Wallet
+              </button>
+              <button v-else @click="disconnectWallet" class="disconnect-btn-header">
+                <svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+                Disconnect
+              </button>
             </div>
-            <div v-else class="connection-info">
-              <div class="info-item">
-                <span class="label">Status:</span>
-                <span class="success">Connected</span>
+            <div class="section-content">
+              <div v-if="!isConnected" class="connection-prompt">
+                <p>Connect your wallet to use FHEVM features</p>
               </div>
-              <div class="info-item">
-                <span class="label">Address:</span>
-                <span class="address">{{ account }}</span>
+              <div v-else class="connection-info">
+                <div class="info-item">
+                  <span class="label">Status:</span>
+                  <span class="success">Connected</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Address:</span>
+                  <span class="address">{{ account }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Chain ID:</span>
+                  <span class="value">{{ chainId }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="label">Contract:</span>
+                  <span class="contract">{{ contractAddress }}</span>
+                </div>
               </div>
-              <div class="info-item">
-                <span class="label">Chain ID:</span>
-                <span class="value">{{ chainId }}</span>
+            </div>
+          </div>
+
+          <!-- SDK Info -->
+          <div class="section">
+            <div class="section-header">
+              <h2>Universal FHEVM SDK</h2>
+              <p class="subtitle">Vue compatible implementation</p>
+            </div>
+            <div class="section-content">
+              <div class="features-list">
+                <div class="feature-item">
+                  <span class="checkmark">✓</span>
+                  <span>Vue compatible FHEVM</span>
+                </div>
+                <div class="feature-item">
+                  <span class="checkmark">✓</span>
+                  <span>No webpack bundling issues</span>
+                </div>
+                <div class="feature-item">
+                  <span class="checkmark">✓</span>
+                  <span>Real contract interactions</span>
+                </div>
+                <div class="feature-item">
+                  <span class="checkmark">✓</span>
+                  <span>Framework-agnostic core</span>
+                </div>
+                <div class="feature-item">
+                  <span class="checkmark">✓</span>
+                  <span>Works in React, Next.js, Vue</span>
+                </div>
+                <div class="feature-item">
+                  <span class="checkmark">✓</span>
+                  <span>Clean, simple API</span>
+                </div>
               </div>
-              <div class="info-item">
-                <span class="label">Contract:</span>
-                <span class="contract">{{ contractAddress }}</span>
+              <div class="note">
+                <strong>Note:</strong> This is a demonstration using REAL FHEVM SDK from Zama's CDN. 
+                The SDK provides actual encryption/decryption functionality on Sepolia testnet.
               </div>
             </div>
           </div>
@@ -135,42 +178,67 @@
             </div>
           </div>
 
-          <!-- SDK Info -->
-          <div class="section">
+          <!-- Public Decryption Demo -->
+          <div v-if="fhevmStatus === 'ready'" class="section">
             <div class="section-header">
-              <h2>Universal FHEVM SDK</h2>
-              <p class="subtitle">Vue compatible implementation</p>
+              <h2>Public Decryption Demo</h2>
+              <p class="subtitle">Testing public decryption with hardcoded ciphertexts</p>
             </div>
             <div class="section-content">
-              <div class="features-list">
-                <div class="feature-item">
-                  <span class="checkmark">✓</span>
-                  <span>Vue compatible FHEVM</span>
+              <div class="demo-controls">
+                <!-- Show ciphertexts initially -->
+                <div class="control-group">
+                  <div class="handle-display">
+                    <span class="label">Encrypted Count Ciphertext:</span>
+                    <span class="handle">{{ HARDCODED_CIPHERTEXTS.encryptedCount }}</span>
+                  </div>
+                  <div class="handle-display">
+                    <span class="label">Encrypted Sum Ciphertext:</span>
+                    <span class="handle">{{ HARDCODED_CIPHERTEXTS.encryptedSum }}</span>
+                  </div>
                 </div>
-                <div class="feature-item">
-                  <span class="checkmark">✓</span>
-                  <span>No webpack bundling issues</span>
+
+                <div class="control-group">
+                  <button 
+                    @click="handlePublicDecrypt"
+                    :disabled="isPublicDecrypting"
+                    class="btn btn-primary"
+                  >
+                    <svg class="lucide-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                    {{ isPublicDecrypting ? 'Decrypting...' : 'Test Public Decrypt' }}
+                  </button>
                 </div>
-                <div class="feature-item">
-                  <span class="checkmark">✓</span>
-                  <span>Real contract interactions</span>
+
+                <!-- Show decrypted results only after clicking -->
+                <div v-if="publicDecryptedCount !== null || publicDecryptedSum !== null" class="result-display">
+                  <h3 style="color: #ffd208; margin: 0 0 10px 0;">Public Decryption Results:</h3>
+                  <div v-if="publicDecryptedCount !== null" class="info-item">
+                    <span class="label">Decrypted Count:</span>
+                    <span class="result">{{ publicDecryptedCount }}</span>
+                  </div>
+                  <div v-if="publicDecryptedSum !== null" class="info-item">
+                    <span class="label">Decrypted Sum:</span>
+                    <span class="result">{{ publicDecryptedSum }}</span>
+                  </div>
+                  <div class="note">
+                    These values were decrypted using public decryption (no user signature required)
+                  </div>
+                  <div class="note" style="margin-top: 12px; font-size: 12px;">
+                    <strong>Source:</strong> The encrypted count and sum ciphertexts are from the
+                    <a 
+                      href="https://sepolia.etherscan.io/address/0xb218c0a83fb718683ddbf97b56e01df3de3bfcf3#code" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style="color: #ffd208; text-decoration: underline;"
+                    >
+                      ReviewCardsFHE.sol contract
+                    </a>
+                    on Sepolia. These ciphertexts are publicly decryptable, demonstrating the public decryption functionality.
+                  </div>
                 </div>
-                <div class="feature-item">
-                  <span class="checkmark">✓</span>
-                  <span>Framework-agnostic core</span>
-                </div>
-                <div class="feature-item">
-                  <span class="checkmark">✓</span>
-                  <span>Works in React, Next.js, Vue</span>
-                </div>
-                <div class="feature-item">
-                  <span class="checkmark">✓</span>
-                  <span>Clean, simple API</span>
-                </div>
-              </div>
-              <div class="note">
-                <strong>Note:</strong> This is a demonstration using REAL FHEVM SDK from Zama's CDN. 
-                The SDK provides actual encryption/decryption functionality on Sepolia testnet.
               </div>
             </div>
           </div>
@@ -183,7 +251,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { ethers } from 'ethers'
-import { initializeFheInstance, decryptValue, createEncryptedInput } from '@fhevm-sdk'
+import { initializeFheInstance, decryptValue, createEncryptedInput, publicDecrypt } from '@fhevm-sdk'
 
 // Contract configuration
 const CONTRACT_ADDRESSES = {
@@ -232,6 +300,17 @@ const isProcessing = ref(false)
 const message = ref<string>('')
 const fhevmStatus = ref<'idle' | 'loading' | 'ready' | 'error'>('idle')
 const fhevmError = ref<string>('')
+
+// Public decryption state
+const publicDecryptedCount = ref<number | null>(null)
+const publicDecryptedSum = ref<number | null>(null)
+const isPublicDecrypting = ref(false)
+
+// Hardcoded ciphertexts for public decryption demo
+const HARDCODED_CIPHERTEXTS = {
+  encryptedCount: "0x42bbe4377f93c8e01c6ea6a9bfe98cab65b67b97e1ff0000000000aa36a70500",
+  encryptedSum: "0x1495e50acd5cef684c3a9cae49e18a13d631768f70ff0000000000aa36a70500"
+}
 
 const contractAddress = computed(() => 
   CONTRACT_ADDRESSES[chainId.value as keyof typeof CONTRACT_ADDRESSES] || 'Not supported chain'
@@ -340,6 +419,35 @@ const handleDecrypt = async () => {
   } catch (error) {
     console.error('Decryption failed:', error)
     message.value = 'Decryption failed'
+  }
+}
+
+// Public decryption function
+const handlePublicDecrypt = async () => {
+  if (fhevmStatus.value !== 'ready') return
+  
+  try {
+    isPublicDecrypting.value = true
+    message.value = 'Testing public decryption...'
+    
+    // Test public decryption with hardcoded ciphertexts
+    const countResult = await publicDecrypt(HARDCODED_CIPHERTEXTS.encryptedCount)
+    const sumResult = await publicDecrypt(HARDCODED_CIPHERTEXTS.encryptedSum)
+    
+    publicDecryptedCount.value = countResult
+    publicDecryptedSum.value = sumResult
+    message.value = 'Public decryption completed!'
+    
+    console.log('✅ Public decryption results:')
+    console.log('Count:', countResult)
+    console.log('Sum:', sumResult)
+    
+    setTimeout(() => message.value = '', 3000)
+  } catch (error) {
+    console.error('Public decryption failed:', error)
+    message.value = 'Public decryption failed'
+  } finally {
+    isPublicDecrypting.value = false
   }
 }
 
