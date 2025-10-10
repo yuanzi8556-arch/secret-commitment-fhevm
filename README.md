@@ -43,12 +43,113 @@ pnpm sdk:build
 
 ### **3. Choose Your Framework**
 
-| Framework | Command | Port | Description |
-|-----------|---------|------|-------------|
-| ⚛️ **React** | `pnpm --filter react-showcase start` | 3000 | CDN-based FHEVM |
-| 🚀 **Next.js** | `pnpm --filter nextjs-showcase dev` | 3001 | Local SDK package |
-| 💚 **Vue** | `pnpm --filter vue-showcase dev` | 3003 | CDN-based FHEVM |
-| 🖥️ **Node.js** | `pnpm --filter node-showcase start` | CLI | Server-side FHEVM |
+| Framework | Command | Port | FHEVM Loading | Description |
+|-----------|---------|------|---------------|-------------|
+| ⚛️ **React** | `pnpm --filter react-showcase start` | 3000 | CDN Script | CDN-based FHEVM |
+| 🚀 **Next.js** | `pnpm --filter nextjs-showcase dev` | 3001 | CDN Script | Next.js with CDN |
+| 💚 **Vue** | `pnpm --filter vue-showcase dev` | 3003 | CDN Script | Vue with CDN |
+| 🖥️ **Node.js** | `pnpm --filter node-showcase start` | CLI | Mock | Server-side demo |
+
+## 🔧 **FHEVM Loading Options**
+
+### **Option 1: CDN Script (Recommended)**
+All showcases use this approach - add the script tag to your HTML:
+
+```html
+<!-- Add this to your HTML <head> or <body> -->
+<script
+  src="https://cdn.zama.ai/relayer-sdk-js/0.2.0/relayer-sdk-js.umd.cjs"
+  type="text/javascript"
+></script>
+```
+
+**Advantages:**
+- ✅ No bundling issues
+- ✅ Works with all frameworks
+- ✅ Automatic loading
+- ✅ No webpack conflicts
+
+### **Option 2: NPM Package (Advanced)**
+For advanced users who want to bundle the SDK:
+
+```bash
+npm install @zama-fhe/relayer-sdk
+```
+
+**Note:** This can cause webpack/bundling issues in some frameworks.
+
+### **How It Works**
+1. **CDN Script** loads `window.RelayerSDK` globally
+2. **Universal SDK** detects and uses the global instance
+3. **No configuration needed** - works out of the box
+
+## 🎯 **Developer Options**
+
+### **For New Projects**
+```bash
+# 1. Install the Universal SDK
+npm install @fhevm-sdk
+
+# 2. Add CDN script to your HTML
+<script src="https://cdn.zama.ai/relayer-sdk-js/0.2.0/relayer-sdk-js.umd.cjs"></script>
+
+# 3. Use the hooks in your components
+import { useWallet, useFhevm, useContract, useFhevmOperations } from '@fhevm-sdk'
+```
+
+### **For Existing Projects**
+```bash
+# Option A: CDN Approach (Recommended)
+# Just add the script tag and import the SDK
+
+# Option B: NPM Approach (Advanced)
+npm install @zama-fhe/relayer-sdk @fhevm-sdk
+# Then configure webpack/bundler to handle the SDK
+```
+
+### **Framework-Specific Setup**
+
+#### **React (Create React App)**
+```html
+<!-- public/index.html -->
+<script src="https://cdn.zama.ai/relayer-sdk-js/0.2.0/relayer-sdk-js.umd.cjs"></script>
+```
+
+#### **Next.js**
+```tsx
+// app/layout.tsx
+import Script from 'next/script'
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        <Script
+          src="https://cdn.zama.ai/relayer-sdk-js/0.2.0/relayer-sdk-js.umd.cjs"
+          strategy="beforeInteractive"
+        />
+        {children}
+      </body>
+    </html>
+  )
+}
+```
+
+#### **Vue**
+```html
+<!-- index.html -->
+<script src="https://cdn.zama.ai/relayer-sdk-js/0.2.0/relayer-sdk-js.umd.cjs"></script>
+```
+
+#### **Vanilla JS**
+```html
+<!-- index.html -->
+<script src="https://cdn.zama.ai/relayer-sdk-js/0.2.0/relayer-sdk-js.umd.cjs"></script>
+<script type="module">
+  import { FhevmVanilla } from '@fhevm-sdk'
+  // Use the SDK...
+</script>
+```
 
 ## 🎯 **Framework Examples**
 
