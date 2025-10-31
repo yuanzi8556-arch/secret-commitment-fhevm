@@ -361,7 +361,74 @@ pnpm --filter vue-showcase dev         # Vue on :3003
 pnpm --filter node-showcase explorer   # Interactive CLI mode (recommended)
 pnpm --filter node-showcase start      # HTTP server mode
 pnpm --filter node-showcase cli        # Non-interactive CLI mode
+
+
 ```
+
+### **HTTP Server Mode**
+
+Run the node-showcase as an HTTP server with API endpoints:
+
+```bash
+# Start the HTTP server
+pnpm start
+
+# Server runs on http://localhost:3001
+# Available endpoints:
+# - GET  /          - List available endpoints
+# - GET  /health    - Health check
+# - GET  /config    - Get FHEVM configuration
+# - POST /counter   - Run counter demo
+# - POST /voting    - Run voting demo
+# - POST /ratings   - Run ratings demo
+# - POST /run-all   - Run all demos
+```
+
+**Test endpoints using PowerShell:**
+```powershell
+# Run counter demo
+Invoke-RestMethod -Uri http://localhost:3001/counter -Method POST
+
+# Run voting demo
+Invoke-RestMethod -Uri http://localhost:3001/voting -Method POST
+
+# Get configuration
+Invoke-RestMethod -Uri http://localhost:3001/config -Method GET
+```
+
+### **Non-Interactive CLI Mode**
+
+Run all demos sequentially without interaction:
+
+```bash
+# Run all demos at once
+pnpm cli
+
+# Output includes:
+# - Counter demo: Increment → Decrement → Decrypt
+# - Voting demo: Create session → Vote
+# - Ratings demo: Submit rating → Public decrypt stats
+```
+
+## 🛠️ **Development**
+
+```bash
+# Interactive CLI mode (recommended for testing)
+pnpm explorer
+
+# HTTP server mode
+pnpm start
+
+# Non-interactive CLI mode
+pnpm cli
+
+# Development mode (watch HTTP server)
+pnpm dev
+
+# Build TypeScript
+pnpm build
+```
+
 
 ## 📚 **Showcase Documentation**
 
