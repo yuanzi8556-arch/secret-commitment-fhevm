@@ -1,6 +1,45 @@
 # 🖥️ Node.js FHEVM Showcase
 
-A Node.js CLI application demonstrating **REAL** Universal FHEVM SDK operations with actual server-side blockchain interactions on Sepolia testnet. This showcase proves that **our FHEVM SDK works perfectly in Node.js environments**!
+A Node.js CLI application demonstrating the **Universal FHEVM SDK** using the Node.js class adapter (`FhevmNode`) with real server-side blockchain interactions on Sepolia testnet.
+
+## 🏗️ **Architecture**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  Node.js Showcase                            │
+│                                                               │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │  index.ts    │  │ counter.ts    │  │ voting.ts    │      │
+│  │              │  │              │  │              │      │
+│  │              │  │              │  │              │      │
+│  │              │  │              │  │              │      │
+│  │              │  │              │  │              │      │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
+│         │                 │                  │               │
+│         │                 │                  │               │
+│         │                 │                  │               │
+│         └─────────────────┼──────────────────┘              │
+│                           │                                   │
+│                   ┌───────▼────────┐                        │
+│                   │   FhevmNode    │                        │
+│                   │   Class Adapter│                        │
+│                   │                 │                        │
+│                   │ ┌────────────┐ │                        │
+│                   │ │initialize()│ │                        │
+│                   │ │encrypt()   │ │                        │
+│                   │ │decrypt()   │ │                        │
+│                   │ │publicDecrypt││                        │
+│                   │ │createContract│                        │
+│                   │ │executeTx() │ │                        │
+│                   │ └─────┬───────┘ │                        │
+│                   └───────┼─────────┘                        │
+│                           │                                   │
+│                   ┌───────▼────────┐                        │
+│                   │   Core SDK     │                        │
+│                   │  (fhevm-sdk)   │                        │
+│                   └─────────────────┘                        │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ## 🚀 **Quick Start**
 
@@ -11,198 +50,221 @@ cd packages/node-showcase
 # Install dependencies
 pnpm install
 
-# Set environment variables
-cp .env.example .env
-# Edit .env with your private key and RPC URL
-
-# Run the complete FHEVM operations test (uses our Universal SDK)
-node test-fhevm-operations.js
-
-# Or start the showcase (also uses our Universal SDK)
+# Run the showcase
 pnpm start
+
+# This runs:
+# - Counter demo (increment/decrement/decrypt)
+# - Voting demo (create session/vote)
+# - Ratings demo (submit rating/public decrypt)
 ```
 
 ## ✨ **Features**
 
-- ✅ **REAL FHEVM operations** - No more mocks!
-- ✅ **Our Universal FHEVM SDK** - Both test file and showcase use our SDK
-- ✅ **Framework-agnostic capability** - Proves Node.js compatibility
-- ✅ **Server-side encryption/decryption** - Actual cryptographic operations
-- ✅ **Real blockchain interactions** - Live Sepolia testnet
-- ✅ **Hardcoded configuration** - No environment variables needed
-- ✅ **Real wallet integration** - Working private key
-- ✅ **CLI interface** - Command-line FHEVM operations
-- ✅ **Complete workflow** - Increment → Decrement → Decrypt
+- ✅ **Node.js Adapter** - Uses `FhevmNode` class adapter
+- ✅ **Real FHEVM operations** - Server-side blockchain interactions
+- ✅ **Multiple demos** - Counter, Voting, Ratings
+- ✅ **EIP-712 decryption** - Proper authentication
+- ✅ **Public decryption** - No signature required
+- ✅ **Real contract interactions** - Sepolia testnet
+- ✅ **CLI interface** - Command-line operations
+- ✅ **TypeScript support** - Full type safety
 
 ## 🔧 **Tech Stack**
 
-- **Node.js** - Server-side JavaScript
+- **Node.js** - Server-side JavaScript runtime
 - **TypeScript** - Full type safety
 - **Ethers.js** - Ethereum interactions
-- **Dotenv** - Environment variables
 - **@fhevm-sdk** - Universal FHEVM SDK with Node.js adapter
+- **tsx** - TypeScript execution
 
-## 🎣 **Our Universal FHEVM SDK Usage**
+## 🎣 **Adapter Usage**
 
-Both the **test file** (`test-fhevm-operations.js`) and **showcase** (`src/index.ts`) demonstrate that **our Universal FHEVM SDK works perfectly in Node.js** using the `FhevmNode` adapter:
+This showcase demonstrates how to use the Node.js class adapter (`FhevmNode`) from `@fhevm-sdk`:
+
+### **Main Entry (`src/index.ts`)**
 
 ```typescript
-import { FhevmNode } from '@fhevm-sdk';
+import { FhevmNode } from '../../fhevm-sdk/dist/adapters/node.js';
+import { runCounterDemo } from './counter.js';
+import { runVotingDemo } from './voting.js';
+import { runRatingsDemo } from './ratings.js';
 
 async function main() {
-  // Initialize Node.js FHEVM adapter with real configuration
+  // Initialize FHEVM Node.js instance
   const fhevm = new FhevmNode({
-    rpcUrl: 'https://sepolia.infura.io/v3/YOUR_KEY',
-    privateKey: 'YOUR_PRIVATE_KEY',
-    chainId: 11155111
+    rpcUrl: RPC_URL,
+    privateKey: PRIVATE_KEY,
+    chainId: CHAIN_ID
   });
+  
   await fhevm.initialize();
   
-  // REAL FHEVM operations
-  const encrypted = await fhevm.encrypt(contractAddress, userAddress, value);
-  const decrypted = await fhevm.decrypt(handle, contractAddress);
-  
-  // Execute REAL transactions
-  const contract = fhevm.createContract(address, abi);
-  const receipt = await fhevm.executeEncryptedTransaction(contract, 'increment', encrypted);
+  // Run demos
+  await runCounterDemo(fhevm, config);
+  await runVotingDemo(fhevm, config);
+  await runRatingsDemo(fhevm, config);
 }
 ```
 
-### **Our FHEVM SDK Node.js Adapter**
+### **Counter Demo (`src/counter.ts`)**
 
-The Node.js showcase uses **our FHEVM SDK's** `FhevmNode` class, proving it works in Node.js:
+```typescript
+import { FhevmNode } from '../../fhevm-sdk/dist/adapters/node.js';
 
-- **`FhevmNode(options)`** - Node.js FHEVM adapter with RPC/wallet config
-- **`initialize()`** - Initialize FHEVM instance with real blockchain connection
-- **`encrypt(contractAddress, userAddress, value)`** - REAL encryption operations
-- **`decrypt(handle, contractAddress)`** - REAL decryption with EIP-712 signing
-- **`createContract(address, abi)`** - Create contract instance for transactions
-- **`executeEncryptedTransaction(contract, method, encryptedData)`** - Execute REAL transactions
-- **`getAddress()`** - Get wallet address
-- **`getConfig()`** - Get configuration info
+export async function runCounterDemo(fhevm: FhevmNode, config: CounterDemoConfig) {
+  // Create contract
+  const contract = fhevm.createContract(contractAddress, CONTRACT_ABI);
+  
+  // Encrypt increment value
+  const encrypted = await fhevm.encrypt(contractAddress, walletAddress, 1);
+  
+  // Execute increment transaction
+  await fhevm.executeEncryptedTransaction(contract, 'increment', encrypted);
+  
+  // Read encrypted count
+  const countHandle = await contract.getCount();
+  
+  // Decrypt count (EIP-712)
+  const decrypted = await fhevm.decrypt(countHandle, contractAddress);
+  
+  console.log(`Decrypted count: ${decrypted}`);
+}
+```
+
+### **Voting Demo (`src/voting.ts`)**
+
+```typescript
+import { FhevmNode } from '../../fhevm-sdk/dist/adapters/node.js';
+
+export async function runVotingDemo(fhevm: FhevmNode, config: VotingDemoConfig) {
+  const contract = fhevm.createContract(VOTING_CONTRACT_ADDRESS, VOTING_CONTRACT_ABI);
+  
+  // Create session if needed
+  if (sessionCount === 0) {
+    await contract.createSession(86400); // 24 hours
+  }
+  
+  // Encrypt vote (YES = 1)
+  const encryptedVote = await fhevm.encrypt(VOTING_CONTRACT_ADDRESS, walletAddress, 1);
+  
+  // Extract encrypted data and proof
+  const encryptedData = encryptedVote.handles[0];
+  const proof = encryptedVote.inputProof;
+  
+  // Vote directly
+  await contract.vote(sessionId, encryptedData, proof);
+}
+```
+
+### **Ratings Demo (`src/ratings.ts`)**
+
+```typescript
+import { FhevmNode } from '../../fhevm-sdk/dist/adapters/node.js';
+
+export async function runRatingsDemo(fhevm: FhevmNode, config: RatingsDemoConfig) {
+  const contract = fhevm.createContract(RATINGS_CONTRACT_ADDRESS, RATINGS_CONTRACT_ABI);
+  
+  // Encrypt rating (5 stars)
+  const encryptedRating = await fhevm.encrypt(RATINGS_CONTRACT_ADDRESS, walletAddress, 5);
+  
+  // Submit rating
+  await fhevm.executeEncryptedTransaction(contract, 'submitEncryptedRating', encryptedRating, cardId);
+  
+  // Get encrypted stats
+  const stats = await contract.getEncryptedStats(cardId);
+  
+  // Public decrypt stats (no signature required)
+  const sum = await fhevm.publicDecrypt(stats.sum);
+  const count = await fhevm.publicDecrypt(stats.count);
+  const average = sum / count;
+  
+  console.log(`Average rating: ${average}`);
+}
+```
+
+## 🎯 **Available Methods**
+
+### **`FhevmNode` Class**
+
+```typescript
+class FhevmNode {
+  // Initialization
+  async initialize(): Promise<void>
+  
+  // Encryption
+  async encrypt(contractAddress: string, userAddress: string, value: number): Promise<any>
+  
+  // Decryption
+  async decrypt(handle: string, contractAddress: string): Promise<number>
+  async publicDecrypt(handle: string): Promise<number>
+  
+  // Contract operations
+  createContract(address: string, abi: any[]): ethers.Contract
+  async executeEncryptedTransaction(
+    contract: ethers.Contract,
+    methodName: string,
+    encryptedData: any,
+    ...additionalParams: any[]
+  ): Promise<any>
+  
+  // Utility
+  async getAddress(): Promise<string | null>
+  getConfig(): object
+  getStatus(): 'ready' | 'idle'
+}
+```
 
 ## 🎯 **What It Demonstrates**
 
-1. **Environment Setup** - Private key and RPC configuration
-2. **Wallet Connection** - Real wallet integration
-3. **Contract Connection** - Live blockchain contract
-4. **Encrypted Input Creation** - Real encryption for increment
-5. **Increment Transaction** - Real blockchain transaction
-6. **Count Reading** - Read encrypted count after increment
-7. **EIP-712 Decryption** - Decrypt count after increment
-8. **Decrement Operations** - Complete decrement workflow
-9. **Final Decryption** - Decrypt count after decrement
-10. **Complete Workflow** - Increment → Decrement → Decrypt
+### **Counter Demo**
+1. **Encrypt increment value** - Create encrypted input
+2. **Execute increment transaction** - Send encrypted transaction
+3. **Read encrypted count** - Get encrypted value from contract
+4. **Decrypt count** - EIP-712 user decryption
+5. **Decrement workflow** - Complete decrement with decryption
+
+### **Voting Demo**
+1. **Create voting session** - Initialize new session if needed
+2. **Check session status** - Validate session is active
+3. **Check vote status** - Verify user hasn't voted
+4. **Encrypt vote** - Create encrypted YES vote (value 1)
+5. **Submit vote** - Send encrypted vote to contract
+
+### **Ratings Demo**
+1. **Get rating cards** - Read available cards from contract
+2. **Check card exists** - Validate card is available
+3. **Check rating status** - Verify user hasn't rated
+4. **Encrypt rating** - Create encrypted 5-star rating
+5. **Submit rating** - Send encrypted rating to contract
+6. **Get encrypted stats** - Read sum and count handles
+7. **Public decrypt stats** - Decrypt without signature
+8. **Calculate average** - Compute average rating
 
 ## 🌐 **Configuration**
 
 - **Contract:** `0xead137D42d2E6A6a30166EaEf97deBA1C3D1954e`
+- **Ratings Contract:** `0xcA2430F1B112EC25cF6b6631bb40039aCa0C86e0`
+- **Voting Contract:** `0x7294A541222ce449faa2B8A7214C571b0fCAb52E`
 - **Network:** Sepolia testnet (Chain ID: 11155111)
-- **RPC:** Hardcoded Infura endpoint (no env vars needed)
-- **Wallet:** Hardcoded working private key
+- **RPC:** Configurable via environment variables
 
 ## 📱 **Usage**
 
-1. **No Setup Required** - Hardcoded configuration works out of the box
-2. **Run Test File** - Execute `node test-fhevm-operations.js`
-3. **Run SDK Showcase** - Execute `npx tsx src/index.ts`
-4. **Watch Live Data** - See real blockchain interactions
-5. **Understand Workflow** - Learn FHEVM concepts
-
-## 🔐 **FHEVM Features**
-
-- **Our FHEVM SDK Working** - Proves framework-agnostic capability
-- **Real blockchain calls** - Actual contract interactions
-- **Hardcoded configuration** - No environment setup needed
-- **CLI interface** - Server-side FHEVM usage
-- **Complete workflow** - Increment → Decrement → Decrypt
-
-## 🏗️ **Architecture**
-
-```
-packages/node-showcase/
-├── src/
-│   └── index.ts           # Main showcase using our Universal FHEVM SDK
-├── test-fhevm-operations.js  # Complete test using our Universal FHEVM SDK
-├── .env                   # Environment variables
-└── package.json           # Dependencies and scripts
-```
-
-## 🎨 **CLI Output**
-
-### **Complete Universal FHEVM SDK Test**
-
-The `test-fhevm-operations.js` demonstrates the full workflow using **our Universal FHEVM SDK**:
-
 ```bash
-🧪 Testing REAL FHEVM operations in Node.js environment...
+# Run all demos
+pnpm start
 
-📦 Importing RelayerSDK...
-✅ RelayerSDK imported successfully
-🔗 Creating RPC provider...
-✅ Wallet created: 0xb8c81a641A4A4C47d11e5464C77EdcB9737784CC
-🏗️ Creating FHEVM instance...
-✅ FHEVM instance created successfully!
-📄 Setting up contract...
-✅ Contract connected: 0xead137D42d2E6A6a30166EaEf97deBA1C3D1954e
-
-🔐 Test 1: Creating encrypted input for increment...
-✅ Encrypted input created successfully
-   Encrypted data: 0x184da7af72f27d03da29...
-   Proof: 0x0101184da7af72f27d03...
-
-➕ Test 2: Attempting increment transaction...
-✅ Increment transaction sent: 0xe399e79d439b4162688a53f916a84fc2b91fead3005315a2dd55d5cc918e7f6d
-✅ Increment transaction confirmed: 0xe399e79d439b4162688a53f916a84fc2b91fead3005315a2dd55d5cc918e7f6d
-
-📊 Test 3: Reading encrypted count after increment...
-✅ New encrypted count handle: 0xa291398b7fc169ff11f275049622660f29239962a5ff0000000000aa36a70400
-
-🔓 Test 4: Decrypting new count using SDK decryptValue...
-✅ Decrypted count after increment: 49
-
-🔐 Test 5: Creating encrypted input for decrement...
-✅ Encrypted input for decrement created successfully
-   Decrement encrypted data: 0x4bfd614d5d66d5ec8d14...
-   Decrement proof: 0x01014bfd614d5d66d5ec...
-
-➖ Test 6: Attempting decrement transaction...
-✅ Decrement transaction sent: 0x11ad74d8ea5be71eec9ca9f27d971aa616b1a44db96e2928004419d6818342ba
-✅ Decrement transaction confirmed: 0x11ad74d8ea5be71eec9ca9f27d971aa616b1a44db96e2928004419d6818342ba
-
-📊 Test 7: Reading encrypted count after decrement...
-✅ Final encrypted count handle: 0xa06cd58e2fda77f10f293208041a9855c8a18947f8ff0000000000aa36a70400
-
-🔓 Test 8: Decrypting final count after decrement...
-✅ Final decrypted count after decrement: 48
-
-🎉 Complete FHEVM operations test completed!
-✅ Real FHEVM functionality verified
-✅ Counter increment operation tested
-✅ Counter decrement operation tested
-✅ EIP-712 decryption after increment tested
-✅ EIP-712 decryption after decrement tested
-✅ Complete increment → decrement → decrypt workflow verified
-✅ Node.js environment fully functional
+# Output includes:
+# - Counter demo: Increment → Decrement → Decrypt
+# - Voting demo: Create session → Vote
+# - Ratings demo: Submit rating → Public decrypt stats
 ```
-
-### **Key Output Features**
-
-- **Environment Configuration** - Shows loaded variables
-- **FHEVM Status** - SDK initialization
-- **Wallet Connection** - Real wallet address
-- **Contract Reading** - Live blockchain data
-- **Decryption Results** - Real decrypted values
-- **Transaction Attempts** - Real blockchain calls
-- **Complete Workflow** - Increment → Decrement → Decrypt
 
 ## 🛠️ **Development**
 
 ```bash
-# Run the complete FHEVM operations test
-node test-fhevm-operations.js
-
-# Start the showcase
+# Run showcase
 pnpm start
 
 # Development mode (watch)
@@ -216,34 +278,19 @@ pnpm build
 
 - `node` - Node.js runtime
 - `ethers` - Ethereum interactions
-- `dotenv` - Environment variables
+- `@fhevm-sdk` - Universal FHEVM SDK with Node.js adapter
 - `typescript` - Type safety
-- `@zama-fhe/relayer-sdk` - FHEVM SDK (for reference)
-
-## 🔧 **Configuration**
-
-Create `.env` file:
-```bash
-# Node.js FHEVM Showcase Environment Variables
-RPC_URL=https://sepolia.infura.io/v3/YOUR_INFURA_KEY
-PRIVATE_KEY=YOUR_PRIVATE_KEY
-```
+- `tsx` - TypeScript execution
+- `dotenv` - Environment variables
 
 ## 🎉 **Success Metrics**
 
 - ✅ **Real blockchain interactions** - Live Sepolia testnet
-- ✅ **Environment variables** - Secure configuration
-- ✅ **Real wallet integration** - Your private key
+- ✅ **Node.js adapter working** - Server-side operations
+- ✅ **Multiple demos** - Counter, Voting, Ratings
+- ✅ **EIP-712 authentication** - Proper user decryption
+- ✅ **Public decryption** - No signature required
 - ✅ **CLI interface** - Server-side FHEVM usage
-- ✅ **Complete workflow** - From reading to attempting transactions
+- ✅ **Complete workflows** - End-to-end operations
 
-## 🚨 **Important Notes**
-
-- **Our FHEVM SDK Working** - Proves our SDK works perfectly in Node.js
-- **REAL FHEVM Operations** - Uses actual RelayerSDK with real encryption/decryption
-- **Real blockchain transactions** - Makes actual contract calls on Sepolia testnet
-- **Complete workflow** - Increment → Decrement → Decrypt with EIP-712 signing
-- **Hardcoded configuration** - No environment variables needed
-- **CLI only** - No web interface, perfect for server-side FHEVM operations
-
-**Perfect for learning FHEVM concepts!** 🚀
+**Perfect for server-side FHEVM operations!** 🚀

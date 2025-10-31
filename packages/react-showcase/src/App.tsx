@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { initializeFheInstance } from '@fhevm-sdk';
+import React, { useState, useEffect } from 'react';
+import { useWallet, useFhevm } from '@fhevm-sdk';
 import FheCounter from './components/FheCounter';
 import FheRatings from './components/FheRatings';
 import FheVoting from './components/FheVoting';
@@ -38,34 +38,36 @@ declare global {
 }
 
 function App() {
-  const [account, setAccount] = useState<string>('');
-  const [chainId, setChainId] = useState<number>(0);
-  const [isConnected, setIsConnected] = useState(false);
   const [message, setMessage] = useState<string>('');
-  const [fhevmStatus, setFhevmStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
-
-  const contractAddress = CONTRACT_ADDRESSES[chainId as keyof typeof CONTRACT_ADDRESSES] || 'Not supported chain';
-
+  
   // Network switching state
   const [isSwitchingNetwork, setIsSwitchingNetwork] = useState(false);
   const [networkError, setNetworkError] = useState<string>('');
 
+  // Use adapter hooks - they provide automatic state management
+  const { 
+    address: account, 
+    chainId, 
+    isConnected, 
+    connect: connectWallet, 
+    disconnect: disconnectWallet,
+    error: walletError 
+  } = useWallet();
+  
+  const { 
+    status: fhevmStatus, 
+    initialize: initializeFhevm,
+    error: fhevmError 
+  } = useFhevm();
 
+  const contractAddress = CONTRACT_ADDRESSES[chainId as keyof typeof CONTRACT_ADDRESSES] || 'Not supported chain';
 
-
-  // Initialize FHEVM
-  const initializeFhevm = async () => {
-    setFhevmStatus('loading');
-    
-    try {
-      await initializeFheInstance();
-      setFhevmStatus('ready');
-      console.log('✅ FHEVM initialized for React!');
-    } catch (error) {
-      setFhevmStatus('error');
-      console.error('FHEVM initialization failed:', error);
+  // Auto-initialize FHEVM when wallet connects
+  useEffect(() => {
+    if (isConnected && fhevmStatus === 'idle') {
+      initializeFhevm();
     }
-  };
+  }, [isConnected, fhevmStatus, initializeFhevm]);
 
   // Switch network to Sepolia
   const switchNetworkToSepolia = async () => {
@@ -85,9 +87,7 @@ function App() {
         params: [{ chainId: SEPOLIA_CONFIG.chainId }],
       });
 
-      // Update chain ID after successful switch
-      const chainIdHex = await window.ethereum.request({ method: 'eth_chainId' });
-      setChainId(parseInt(chainIdHex, 16));
+      // Chain ID will be updated automatically by useWallet hook
       setMessage('Successfully switched to Sepolia!');
       
       console.log('✅ Network switched to Sepolia');
@@ -104,9 +104,7 @@ function App() {
             params: [SEPOLIA_CONFIG],
           });
           
-          // Update chain ID after adding
-          const chainIdHex = await window.ethereum.request({ method: 'eth_chainId' });
-          setChainId(parseInt(chainIdHex, 16));
+          // Chain ID will be updated automatically by useWallet hook
           setMessage('Sepolia network added and switched!');
           
           console.log('✅ Sepolia network added and switched');
@@ -125,41 +123,27 @@ function App() {
     }
   };
 
-  // Wallet connection
-  const connectWallet = async () => {
-    console.log('🔗 Attempting to connect wallet...');
-    
-    if (typeof window === 'undefined') {
-      console.error('❌ Window is undefined - not in browser environment');
-      return;
-    }
-    
-    if (!window.ethereum) {
-      console.error('❌ No Ethereum provider found. Please install MetaMask or connect a wallet.');
-      alert('Please install MetaMask or connect a wallet to use this app.');
-      return;
-    }
-    
+  // Handle wallet connection using the hook
+  const handleConnectWallet = async () => {
     try {
-      console.log('📱 Requesting accounts...');
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      console.log('✅ Accounts received:', accounts);
-      
-      const chainIdHex = await window.ethereum.request({ method: 'eth_chainId' });
-      console.log('🔗 Chain ID:', chainIdHex);
-      
-      setAccount(accounts[0]);
-      setChainId(parseInt(chainIdHex, 16));
-      setIsConnected(true);
-      
-      console.log('✅ Wallet connected successfully!');
-      
-      // Initialize FHEVM after wallet connection
-      await initializeFhevm();
+      await connectWallet();
+      if (walletError) {
+        setMessage(`Wallet error: ${walletError}`);
+        setTimeout(() => setMessage(''), 3000);
+      }
     } catch (error) {
       console.error('❌ Wallet connection failed:', error);
-      alert(`Wallet connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setMessage(`Wallet connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setTimeout(() => setMessage(''), 3000);
     }
+  };
+
+  // Handle wallet disconnect
+  const handleDisconnectWallet = () => {
+    disconnectWallet();
+    setMessage('');
+    setNetworkError('');
+    setIsSwitchingNetwork(false);
   };
 
 
@@ -244,22 +228,14 @@ function App() {
                 <h2 className="text-2xl font-bold text-white">Wallet Connection</h2>
               </div>
               {!isConnected ? (
-                <button onClick={connectWallet} className="btn-primary">
+                <button onClick={handleConnectWallet} className="btn-primary">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                   </svg>
                   Connect
                 </button>
               ) : (
-                <button onClick={() => {
-                  setAccount('');
-                  setChainId(0);
-                  setIsConnected(false);
-                  setFhevmStatus('idle');
-                  setMessage('');
-                  setNetworkError('');
-                  setIsSwitchingNetwork(false);
-                }} className="btn-danger">
+                <button onClick={handleDisconnectWallet} className="btn-danger">
                   Disconnect
                 </button>
               )}
@@ -388,7 +364,7 @@ function App() {
                   </div>
                 </div>
                 
-                {/* Network error display */}
+                {/* Error displays */}
                 {networkError && (
                   <div className="info-card border-red-500/30 bg-red-500/5">
                     <div className="flex items-center gap-2">
@@ -396,6 +372,26 @@ function App() {
                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
                       </svg>
                       <span className="text-red-400 text-sm">{networkError}</span>
+                    </div>
+                  </div>
+                )}
+                {walletError && (
+                  <div className="info-card border-red-500/30 bg-red-500/5">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                      </svg>
+                      <span className="text-red-400 text-sm">Wallet: {walletError}</span>
+                    </div>
+                  </div>
+                )}
+                {fhevmError && (
+                  <div className="info-card border-red-500/30 bg-red-500/5">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                      </svg>
+                      <span className="text-red-400 text-sm">FHEVM: {fhevmError}</span>
                     </div>
                   </div>
                 )}

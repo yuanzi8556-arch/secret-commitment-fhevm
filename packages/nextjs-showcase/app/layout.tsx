@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
-import { FhevmProvider } from './providers/FhevmProvider'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -20,9 +19,7 @@ export default function RootLayout({
           src="https://cdn.zama.ai/relayer-sdk-js/0.2.0/relayer-sdk-js.umd.cjs"
           strategy="beforeInteractive"
         />
-        <FhevmProvider>
-          {children}
-        </FhevmProvider>
+        {children}
       </body>
     </html>
   )

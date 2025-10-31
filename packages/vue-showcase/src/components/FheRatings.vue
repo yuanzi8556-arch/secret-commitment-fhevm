@@ -123,7 +123,7 @@
                   <button
                     v-if="card.selectedRating"
                     @click="submitRating(card.id, card.selectedRating)"
-                    :disabled="isRating === card.id"
+                    :disabled="isRating === card.id || isEncrypting.value"
                     class="submit-rating-btn"
                   >
                     <svg v-if="isRating === card.id" class="icon animate-spin" fill="none" viewBox="0 0 24 24">
@@ -140,7 +140,7 @@
                 <!-- Public Decrypt Button -->
                 <button
                   @click="decryptStats(card.id)"
-                  :disabled="isDecrypting === card.id"
+                  :disabled="isDecrypting === card.id || isHookDecrypting.value"
                   class="public-decrypt-btn"
                 >
                   <svg v-if="isDecrypting === card.id" class="icon animate-spin" fill="none" viewBox="0 0 24 24">
@@ -165,7 +165,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { ethers } from 'ethers'
-import { createEncryptedInput, publicDecrypt } from '@fhevm-sdk'
+import { useEncryptVue, useDecryptVue } from '@fhevm-sdk'
 
 // Contract configuration
 const RATINGS_CONTRACT_ADDRESS = '0xcA2430F1B112EC25cF6b6631bb40039aCa0C86e0'
@@ -317,6 +317,10 @@ interface Props {
 
 const props = defineProps<Props>()
 
+// Use Vue composables
+const { encrypt, isEncrypting, error: encryptError } = useEncryptVue()
+const { publicDecrypt, isDecrypting: isHookDecrypting, error: decryptError } = useDecryptVue()
+
 // Reactive state
 const cards = ref<Card[]>([])
 const totalCards = ref<number>(0)
@@ -465,7 +469,12 @@ const submitRating = async (cardId: number, rating: number) => {
     const contract = new ethers.Contract(RATINGS_CONTRACT_ADDRESS, RATINGS_CONTRACT_ABI, signer)
     
     props.onMessage('Encrypting rating...')
-    const encryptedInput = await createEncryptedInput(RATINGS_CONTRACT_ADDRESS, props.account, rating)
+    const encryptedInput = await encrypt(RATINGS_CONTRACT_ADDRESS, props.account, rating)
+    
+    if (!encryptedInput) {
+      props.onMessage(encryptError.value ? `Encryption failed: ${encryptError.value}` : 'Encryption failed')
+      return
+    }
     
     props.onMessage('Submitting encrypted rating...')
     const tx = await contract.submitEncryptedRating(
@@ -515,6 +524,11 @@ const decryptStats = async (cardId: number) => {
       publicDecrypt(sumBytes),
       publicDecrypt(countBytes)
     ])
+    
+    if (decryptedSum === null || decryptedCount === null) {
+      props.onMessage(decryptError.value ? `Decryption failed: ${decryptError.value}` : 'Decryption failed')
+      return
+    }
     
     const averageRating = decryptedCount > 0 ? decryptedSum / decryptedCount : 0
     

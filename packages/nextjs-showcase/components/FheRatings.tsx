@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import { createEncryptedInput, publicDecrypt } from '@fhevm-sdk';
+import { useEncrypt, useDecrypt } from '@fhevm-sdk';
 
 // Contract configuration
 const RATINGS_CONTRACT_ADDRESS = '0xcA2430F1B112EC25cF6b6631bb40039aCa0C86e0';
@@ -171,6 +171,10 @@ export default function FheRatings({ account, chainId, isConnected, isInitialize
   const [isRating, setIsRating] = useState<number | null>(null);
   const [isDecrypting, setIsDecrypting] = useState<number | null>(null);
 
+  // Use adapter hooks - they provide automatic state management and error handling
+  const { encrypt, isEncrypting, error: encryptError } = useEncrypt();
+  const { publicDecrypt, isDecrypting: isHookDecrypting, error: decryptError } = useDecrypt();
+
   // Load cards from localStorage on mount
   useEffect(() => {
     const savedCards = localStorage.getItem('fhe-ratings-cards');
@@ -301,7 +305,8 @@ export default function FheRatings({ account, chainId, isConnected, isInitialize
       const contract = new ethers.Contract(RATINGS_CONTRACT_ADDRESS, RATINGS_CONTRACT_ABI, signer);
       
       onMessage('Encrypting rating...');
-      const encryptedInput = await createEncryptedInput(RATINGS_CONTRACT_ADDRESS, account, rating);
+      // Use the encrypt hook - it handles loading state and errors automatically
+      const encryptedInput = await encrypt(RATINGS_CONTRACT_ADDRESS, account, rating);
       
       onMessage('Submitting encrypted rating...');
       const tx = await contract.submitEncryptedRating(
@@ -349,6 +354,7 @@ export default function FheRatings({ account, chainId, isConnected, isInitialize
       const [sumBytes, countBytes] = await contract.getEncryptedStats(cardId);
       
       onMessage('Performing public decryption...');
+      // Use the publicDecrypt hook - it handles loading state and errors automatically
       const [decryptedSum, decryptedCount] = await Promise.all([
         publicDecrypt(sumBytes),
         publicDecrypt(countBytes)
@@ -519,10 +525,11 @@ export default function FheRatings({ account, chainId, isConnected, isInitialize
                         {card.selectedRating && (
                           <button
                             onClick={() => submitRating(card.id, card.selectedRating!)}
-                            disabled={isRating === card.id}
+                            disabled={isRating === card.id || isEncrypting}
                             className="btn-primary text-sm px-4 py-2"
+                            title={encryptError || undefined}
                           >
-                            {isRating === card.id ? (
+                            {(isRating === card.id || isEncrypting) ? (
                               <>
                                 <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
@@ -546,10 +553,11 @@ export default function FheRatings({ account, chainId, isConnected, isInitialize
                     {/* Public Decrypt Button */}
                     <button
                       onClick={() => decryptStats(card.id)}
-                      disabled={isDecrypting === card.id}
+                      disabled={isDecrypting === card.id || isHookDecrypting}
                       className="btn-secondary w-full"
+                      title={decryptError || undefined}
                     >
-                      {isDecrypting === card.id ? (
+                      {(isDecrypting === card.id || isHookDecrypting) ? (
                         <>
                           <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>

@@ -8,7 +8,6 @@ let fheInstance: any = null;
 
 /**
  * Initialize FHEVM instance for browser environment
- * PRESERVES EXACT SAME FUNCTIONALITY as before
  */
 async function initializeBrowserFheInstance() {
   if (typeof window === 'undefined' || !window.ethereum) {
@@ -59,9 +58,9 @@ async function initializeNodeFheInstance(rpcUrl?: string) {
           case 'eth_chainId':
             return '0xaa36a7'; // Sepolia chain ID
           case 'eth_accounts':
-            return ['0x8Efff193475604790D04e3F972AB5b9047C3503d'];
+            return ['---YOUR-ADDRESS-HERE---'];
           case 'eth_requestAccounts':
-            return ['0x8Efff193475604790D04e3F972AB5b9047C3503d'];
+            return ['---YOUR-ADDRESS-HERE---'];
           case 'eth_call':
             // Use the real provider for blockchain calls
             return await provider.call(params[0]);
@@ -166,6 +165,152 @@ export async function decryptValue(encryptedBytes: string, contractAddress: stri
     }
     throw error;
   }
+}
+
+/**
+ * Batch decrypt multiple encrypted values using EIP-712 user decryption
+ */
+export async function batchDecryptValues(
+  handles: string[], 
+  contractAddress: string, 
+  signer: any
+): Promise<Record<string, number>> {
+  const fhe = getFheInstance();
+  if (!fhe) throw new Error('FHE instance not initialized. Call initializeFheInstance() first.');
+
+  try {
+    console.log('🔐 Using EIP-712 batch user decryption for handles:', handles);
+    
+    const keypair = fhe.generateKeypair();
+    const handleContractPairs = handles.map(handle => ({
+      handle,
+      contractAddress: contractAddress,
+    }));
+    
+    const startTimeStamp = Math.floor(Date.now() / 1000).toString();
+    const durationDays = "10";
+    const contractAddresses = [contractAddress];
+
+    const eip712 = fhe.createEIP712(
+      keypair.publicKey,
+      contractAddresses,
+      startTimeStamp,
+      durationDays
+    );
+
+    const signature = await signer.signTypedData(
+      eip712.domain,
+      {
+        UserDecryptRequestVerification: eip712.types.UserDecryptRequestVerification,
+      },
+      eip712.message
+    );
+
+    const result = await fhe.userDecrypt(
+      handleContractPairs,
+      keypair.privateKey,
+      keypair.publicKey,
+      signature.replace("0x", ""),
+      contractAddresses,
+      await signer.getAddress(),
+      startTimeStamp,
+      durationDays
+    );
+
+    // Convert result to numbers
+    const decryptedValues: Record<string, number> = {};
+    for (const handle of handles) {
+      decryptedValues[handle] = Number(result[handle]);
+    }
+
+    return decryptedValues;
+  } catch (error: any) {
+    if (error?.message?.includes('Failed to fetch') || error?.message?.includes('NetworkError')) {
+      throw new Error('Decryption service is temporarily unavailable. Please try again later.');
+    }
+    throw error;
+  }
+}
+
+/**
+ * Encrypt values using FHEVM
+ * 
+ * 📝 BIT SIZE SUPPORT:
+ * FHEVM supports different bit sizes for encrypted values. If your contract uses a different bit size
+ * than the default 32-bit, you can use the appropriate method:
+ * - add8(value)   - for 8-bit values (0-255)
+ * - add16(value) - for 16-bit values (0-65535) 
+ * - add32(value) - for 32-bit values (0-4294967295) - DEFAULT
+ * - add64(value) - for 64-bit values (0-18446744073709551615)
+ * - add128(value) - for 128-bit values
+ * - add256(value) - for 256-bit values
+ * 
+ * Example: If your contract expects 8-bit values, replace add32() with add8()
+ */
+export async function encryptValue(
+  contractAddress: string,
+  address: string,
+  plainDigits: number[]
+) {
+  const relayer = getFheInstance();
+  if (!relayer) throw new Error("FHEVM not initialized");
+
+  const inputHandle = relayer.createEncryptedInput(contractAddress, address);
+  for (const d of plainDigits) {
+    inputHandle.add8(d);
+  }
+  
+  const ciphertextBlob = await inputHandle.encrypt();
+  return ciphertextBlob;
+}
+
+/**
+ * Create encrypted input for contract interaction (matches showcase API)
+ */
+export async function createEncryptedInput(contractAddress: string, userAddress: string, value: number) {
+  const fhe = getFheInstance();
+  if (!fhe) throw new Error('FHE instance not initialized. Call initializeFheInstance() first.');
+
+  console.log(`🔐 Creating encrypted input for contract ${contractAddress}, user ${userAddress}, value ${value}`);
+  
+  const inputHandle = fhe.createEncryptedInput(contractAddress, userAddress);
+  inputHandle.add32(value);
+  const result = await inputHandle.encrypt();
+  
+  console.log('✅ Encrypted input created successfully');
+  console.log('🔍 Encrypted result structure:', result);
+  
+  // The FHEVM SDK returns an object with handles and inputProof
+  // We need to extract the correct values for the contract
+  if (result && typeof result === 'object') {
+    // If result has handles array, use the first handle
+    if (result.handles && Array.isArray(result.handles) && result.handles.length > 0) {
+      return {
+        encryptedData: result.handles[0],
+        proof: result.inputProof
+      };
+    }
+    // If result has encryptedData and proof properties
+    else if (result.encryptedData && result.proof) {
+      return {
+        encryptedData: result.encryptedData,
+        proof: result.proof
+      };
+    }
+    // Fallback: use the result as-is
+    else {
+      return {
+        encryptedData: result,
+        proof: result
+      };
+    }
+  }
+  
+  // If result is not an object, use it directly
+  return {
+    encryptedData: result,
+    proof: result
+  };
 }
 
 /**

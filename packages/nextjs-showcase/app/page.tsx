@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import { FhevmProvider, useFhevm } from './providers/FhevmProvider';
+import { useWallet, useFhevm } from '@fhevm-sdk';
 import FheCounter from '../components/FheCounter';
 import FheRatings from '../components/FheRatings';
 import FheVoting from '../components/FheVoting';
@@ -30,59 +30,58 @@ const SEPOLIA_CONFIG = {
 // Window interface is already declared in types/ethereum.d.ts
 
 function HomePage() {
-  const { fheInstance, isInitialized, error, initialize } = useFhevm();
-  const [account, setAccount] = useState<string>('');
-  const [chainId, setChainId] = useState<number>(0);
-  const [isConnected, setIsConnected] = useState(false);
   const [message, setMessage] = useState<string>('');
-
-  const contractAddress = CONTRACT_ADDRESSES[chainId as keyof typeof CONTRACT_ADDRESSES] || 'Not supported chain';
-
+  
   // Network switching state
   const [isSwitchingNetwork, setIsSwitchingNetwork] = useState(false);
   const [networkError, setNetworkError] = useState<string>('');
 
+  // Use adapter hooks - they provide automatic state management
+  const { 
+    address: account, 
+    chainId, 
+    isConnected, 
+    connect: connectWallet, 
+    disconnect: disconnectWallet,
+    error: walletError 
+  } = useWallet();
+  
+  const { 
+    status: fhevmStatus, 
+    initialize: initializeFhevm,
+    error: fhevmError 
+  } = useFhevm();
 
+  const contractAddress = CONTRACT_ADDRESSES[chainId as keyof typeof CONTRACT_ADDRESSES] || 'Not supported chain';
 
-  // Initialize FHEVM when wallet connects
+  // Auto-initialize FHEVM when wallet connects
   useEffect(() => {
-    if (isConnected && !isInitialized && !error) {
-      initialize().catch(console.error);
+    if (isConnected && fhevmStatus === 'idle') {
+      initializeFhevm();
     }
-  }, [isConnected, isInitialized, error, initialize]);
+  }, [isConnected, fhevmStatus, initializeFhevm]);
 
-  // Wallet connection
-  const connectWallet = async () => {
-    console.log('🔗 Attempting to connect wallet...');
-    
-    if (typeof window === 'undefined') {
-      console.error('❌ Window is undefined - not in browser environment');
-      return;
-    }
-    
-    if (!window.ethereum) {
-      console.error('❌ No Ethereum provider found. Please install MetaMask or connect a wallet.');
-      alert('Please install MetaMask or connect a wallet to use this app.');
-      return;
-    }
-    
+  // Handle wallet connection using the hook
+  const handleConnectWallet = async () => {
     try {
-      console.log('📱 Requesting accounts...');
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      console.log('✅ Accounts received:', accounts);
-      
-      const chainIdHex = await window.ethereum.request({ method: 'eth_chainId' });
-      console.log('🔗 Chain ID:', chainIdHex);
-      
-      setAccount(accounts[0]);
-      setChainId(parseInt(chainIdHex, 16));
-      setIsConnected(true);
-      
-      console.log('✅ Wallet connected successfully!');
+      await connectWallet();
+      if (walletError) {
+        setMessage(`Wallet error: ${walletError}`);
+        setTimeout(() => setMessage(''), 3000);
+      }
     } catch (error) {
       console.error('❌ Wallet connection failed:', error);
-      alert(`Wallet connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setMessage(`Wallet connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setTimeout(() => setMessage(''), 3000);
     }
+  };
+
+  // Handle wallet disconnect
+  const handleDisconnectWallet = () => {
+    disconnectWallet();
+    setMessage('');
+    setNetworkError('');
+    setIsSwitchingNetwork(false);
   };
 
   // Switch network to Sepolia
@@ -103,9 +102,7 @@ function HomePage() {
         params: [{ chainId: SEPOLIA_CONFIG.chainId }],
       });
 
-      // Update chain ID after successful switch
-      const chainIdHex = await window.ethereum.request({ method: 'eth_chainId' });
-      setChainId(parseInt(chainIdHex, 16));
+      // Chain ID will be updated automatically by useWallet hook
       setMessage('Successfully switched to Sepolia!');
       
       console.log('✅ Network switched to Sepolia');
@@ -122,9 +119,7 @@ function HomePage() {
             params: [SEPOLIA_CONFIG],
           });
           
-          // Update chain ID after adding
-          const chainIdHex = await window.ethereum.request({ method: 'eth_chainId' });
-          setChainId(parseInt(chainIdHex, 16));
+          // Chain ID will be updated automatically by useWallet hook
           setMessage('Sepolia network added and switched!');
           
           console.log('✅ Sepolia network added and switched');
@@ -163,7 +158,7 @@ function HomePage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {isInitialized ? (
+              {fhevmStatus === 'ready' ? (
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
                     <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -172,7 +167,7 @@ function HomePage() {
                   </div>
                   <span className="status-badge bg-green-600 text-white">READY</span>
                 </div>
-              ) : error ? (
+              ) : fhevmStatus === 'error' ? (
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center">
                     <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -220,21 +215,14 @@ function HomePage() {
                 <h2 className="text-2xl font-bold text-white">Wallet Connection</h2>
               </div>
               {!isConnected ? (
-                <button onClick={connectWallet} className="btn-primary">
+                <button onClick={handleConnectWallet} className="btn-primary">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                   </svg>
                   Connect
                 </button>
               ) : (
-                <button onClick={() => {
-                  setAccount('');
-                  setChainId(0);
-                  setIsConnected(false);
-                  setMessage('');
-                  setNetworkError('');
-                  setIsSwitchingNetwork(false);
-                }} className="btn-danger">
+                <button onClick={handleDisconnectWallet} className="btn-danger">
                   Disconnect
                 </button>
               )}
@@ -363,7 +351,7 @@ function HomePage() {
                   </div>
                 </div>
                 
-                {/* Network error display */}
+                {/* Error displays */}
                 {networkError && (
                   <div className="info-card border-red-500/30 bg-red-500/5">
                     <div className="flex items-center gap-2">
@@ -374,28 +362,48 @@ function HomePage() {
                     </div>
                   </div>
                 )}
+                {walletError && (
+                  <div className="info-card border-red-500/30 bg-red-500/5">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                      </svg>
+                      <span className="text-red-400 text-sm">Wallet: {walletError}</span>
+                    </div>
+                  </div>
+                )}
+                {fhevmError && (
+                  <div className="info-card border-red-500/30 bg-red-500/5">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
+                      </svg>
+                      <span className="text-red-400 text-sm">FHEVM: {fhevmError}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
-          {isConnected && isInitialized && (
+          {isConnected && fhevmStatus === 'ready' && (
             <FheVoting 
               account={account}
               chainId={chainId}
               isConnected={isConnected}
-              isInitialized={isInitialized}
+              isInitialized={fhevmStatus === 'ready'}
               onMessage={setMessage}
             />
           )}
         </div>
 
-        {isConnected && isInitialized && (
+        {isConnected && fhevmStatus === 'ready' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <FheCounter 
               account={account}
               chainId={chainId}
               isConnected={isConnected}
-              isInitialized={isInitialized}
+              isInitialized={fhevmStatus === 'ready'}
               onMessage={setMessage}
             />
 
@@ -403,7 +411,7 @@ function HomePage() {
               account={account}
               chainId={chainId}
               isConnected={isConnected}
-              isInitialized={isInitialized}
+              isInitialized={fhevmStatus === 'ready'}
               onMessage={setMessage}
             />
           </div>
@@ -414,9 +422,5 @@ function HomePage() {
 }
 
 export default function Home() {
-  return (
-    <FhevmProvider>
-      <HomePage />
-    </FhevmProvider>
-  );
+  return <HomePage />;
 }

@@ -31,17 +31,17 @@
         <div class="control-group">
           <button 
             @click="handleDecrypt" 
-            :disabled="!countHandle || isDecrypting"
+            :disabled="!countHandle || isDecrypting.value"
             class="btn-secondary w-full"
           >
-            <svg v-if="isDecrypting" class="icon animate-spin" fill="none" viewBox="0 0 24 24">
+            <svg v-if="isDecrypting.value" class="icon animate-spin" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
             </svg>
             <svg v-else class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
             </svg>
-            {{ isDecrypting ? 'Decrypting...' : 'Decrypt Count' }}
+            {{ isDecrypting.value ? 'Decrypting...' : 'Decrypt Count' }}
           </button>
           <div v-if="decryptedCount !== null" class="info-card">
             <div class="info-row">
@@ -57,7 +57,7 @@
           <div class="button-row">
             <button 
               @click="incrementCounter" 
-              :disabled="isIncrementing || isDecrementing"
+              :disabled="isIncrementing || isDecrementing || isEncrypting.value"
               class="btn-primary"
             >
               <svg v-if="isIncrementing" class="icon animate-spin" fill="none" viewBox="0 0 24 24">
@@ -71,7 +71,7 @@
             </button>
             <button 
               @click="decrementCounter" 
-              :disabled="isIncrementing || isDecrementing"
+              :disabled="isIncrementing || isDecrementing || isEncrypting.value"
               class="btn-danger"
             >
               <svg v-if="isDecrementing" class="icon animate-spin" fill="none" viewBox="0 0 24 24">
@@ -93,7 +93,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { ethers } from 'ethers'
-import { decryptValue, createEncryptedInput } from '@fhevm-sdk'
+import { useDecryptVue, useEncryptVue } from '@fhevm-sdk'
 
 // Contract configuration
 const CONTRACT_ADDRESSES = {
@@ -142,16 +142,19 @@ interface Props {
 
 const props = defineProps<Props>()
 
+// Use Vue composables
+const contractAddress = computed(() => 
+  CONTRACT_ADDRESSES[props.chainId as keyof typeof CONTRACT_ADDRESSES] || 'Not supported chain'
+)
+
+const { decrypt, isDecrypting, error: decryptError } = useDecryptVue()
+const { encrypt, isEncrypting, error: encryptError } = useEncryptVue()
+
 // Reactive state
 const countHandle = ref<string>('')
 const decryptedCount = ref<number | null>(null)
 const isIncrementing = ref(false)
 const isDecrementing = ref(false)
-const isDecrypting = ref(false)
-
-const contractAddress = computed(() => 
-  CONTRACT_ADDRESSES[props.chainId as keyof typeof CONTRACT_ADDRESSES] || 'Not supported chain'
-)
 
 // Get encrypted count from contract
 const getCount = async () => {
@@ -173,31 +176,32 @@ const getCount = async () => {
 
 // Decrypt count using EIP-712
 const handleDecrypt = async () => {
-  if (!countHandle.value || !window.ethereum) return
+  if (!countHandle.value || !window.ethereum || !contractAddress.value || contractAddress.value === 'Not supported chain') return
   
   try {
-    isDecrypting.value = true
     props.onMessage('Decrypting with EIP-712 user decryption...')
     
     // Get signer for EIP-712 signature
     const provider = new ethers.BrowserProvider(window.ethereum)
     const signer = await provider.getSigner()
     
-    const result = await decryptValue(countHandle.value, contractAddress.value, signer)
-    decryptedCount.value = result
-    props.onMessage('EIP-712 decryption completed!')
-    setTimeout(() => props.onMessage(''), 3000)
+    const result = await decrypt(contractAddress.value, signer, countHandle.value)
+    if (result !== null) {
+      decryptedCount.value = result
+      props.onMessage('EIP-712 decryption completed!')
+      setTimeout(() => props.onMessage(''), 3000)
+    } else {
+      props.onMessage(decryptError.value ? `Decryption failed: ${decryptError.value}` : 'Decryption failed')
+    }
   } catch (error) {
     console.error('Decryption failed:', error)
     props.onMessage('Decryption failed')
-  } finally {
-    isDecrypting.value = false
   }
 }
 
 // Increment counter
 const incrementCounter = async () => {
-  if (!props.isConnected || !contractAddress.value || !window.ethereum) return
+  if (!props.isConnected || !contractAddress.value || contractAddress.value === 'Not supported chain' || !window.ethereum) return
   
   try {
     isIncrementing.value = true
@@ -208,7 +212,12 @@ const incrementCounter = async () => {
     const contract = new ethers.Contract(contractAddress.value, CONTRACT_ABI, signer)
     
     props.onMessage('Encrypting input...')
-    const encryptedInput = await createEncryptedInput(contractAddress.value, props.account, 1)
+    const encryptedInput = await encrypt(contractAddress.value, props.account, 1)
+    
+    if (!encryptedInput) {
+      props.onMessage(encryptError.value ? `Encryption failed: ${encryptError.value}` : 'Encryption failed')
+      return
+    }
     
     props.onMessage('Sending transaction...')
     const tx = await contract.increment(encryptedInput.encryptedData, encryptedInput.proof)
@@ -230,7 +239,7 @@ const incrementCounter = async () => {
 
 // Decrement counter
 const decrementCounter = async () => {
-  if (!props.isConnected || !contractAddress.value || !window.ethereum) return
+  if (!props.isConnected || !contractAddress.value || contractAddress.value === 'Not supported chain' || !window.ethereum) return
   
   try {
     isDecrementing.value = true
@@ -241,7 +250,12 @@ const decrementCounter = async () => {
     const contract = new ethers.Contract(contractAddress.value, CONTRACT_ABI, signer)
     
     props.onMessage('Encrypting input...')
-    const encryptedInput = await createEncryptedInput(contractAddress.value, props.account, 1)
+    const encryptedInput = await encrypt(contractAddress.value, props.account, 1)
+    
+    if (!encryptedInput) {
+      props.onMessage(encryptError.value ? `Encryption failed: ${encryptError.value}` : 'Encryption failed')
+      return
+    }
     
     props.onMessage('Sending transaction...')
     const tx = await contract.decrement(encryptedInput.encryptedData, encryptedInput.proof)

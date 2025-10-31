@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "cd ../hardhat && pnpm exec hardhat test ../nextjs-showcase/test/FHECounter.test.js ../nextjs-showcase/test/FHERatings.test.js ../nextjs-showcase/test/SimpleVoting.test.js",
+    "test:watch": "cd ../hardhat && pnpm exec hardhat test ../nextjs-showcase/test/FHECounter.test.js ../nextjs-showcase/test/FHERatings.test.js ../nextjs-showcase/test/SimpleVoting.test.js --watch"
   },
   "dependencies": {
     "@fhevm-sdk": "workspace:*",

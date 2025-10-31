@@ -7,6 +7,6 @@
 export * from './core/index.js';
 
 // Framework adapters - explicit exports to avoid conflicts
-export { useWallet, useFhevm, useContract, useDecrypt, useEncrypt, useFhevmOperations } from './adapters/react.js';
+export { useWallet, useFhevm, useContract, useDecrypt, useEncrypt } from './adapters/react.js';
+export { useWalletVue, useFhevmVue, useContractVue, useDecryptVue, useEncryptVue, useFhevmOperationsVue } from './adapters/vue.js';
 export { FhevmNode } from './adapters/node.js';
-export { FhevmVanilla } from './adapters/vanilla.js';

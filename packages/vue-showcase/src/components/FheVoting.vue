@@ -111,7 +111,7 @@
                 <button
                   v-if="selectedVote"
                   @click="castVote(session.id, selectedVote)"
-                  :disabled="isVoting"
+                  :disabled="isVoting || isEncrypting.value"
                   class="submit-vote-btn"
                 >
                   <svg v-if="isVoting" class="icon animate-spin" fill="none" viewBox="0 0 24 24">
@@ -284,7 +284,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { ethers } from 'ethers'
-import { initializeFheInstance, createEncryptedInput } from '@fhevm-sdk'
+import { useEncryptVue } from '@fhevm-sdk'
 
 // Contract ABI for SimpleVoting_uint32
 const VOTING_CONTRACT_ABI = [
@@ -439,6 +439,9 @@ interface Props {
 
 const props = defineProps<Props>()
 
+// Use Vue composables
+const { encrypt, isEncrypting, error: encryptError } = useEncryptVue()
+
 const sessions = ref<VotingSession[]>([])
 const isLoading = ref(false)
 const isVoting = ref(false)
@@ -551,7 +554,12 @@ const castVote = async (sessionId: number, vote: 'yes' | 'no') => {
     const contract = new ethers.Contract(VOTING_CONTRACT_ADDRESS, VOTING_CONTRACT_ABI, signer)
     
     // Create encrypted vote
-    const encryptedVote = await createEncryptedInput(VOTING_CONTRACT_ADDRESS, props.account, vote === 'yes' ? 1 : 0)
+    const encryptedVote = await encrypt(VOTING_CONTRACT_ADDRESS, props.account, vote === 'yes' ? 1 : 0)
+    
+    if (!encryptedVote) {
+      props.onMessage(encryptError.value ? `Encryption failed: ${encryptError.value}` : 'Encryption failed')
+      return
+    }
     
     // Use the encrypted data and proof from the FHEVM SDK
     const tx = await contract.vote(sessionId, encryptedVote.encryptedData, encryptedVote.proof)

@@ -4,7 +4,7 @@
  */
 
 import { ethers } from 'ethers';
-import { createEncryptedInput } from './encryption.js';
+import { createEncryptedInput } from './fhevm.js';
 
 export class FhevmContract {
   private contract: ethers.Contract;

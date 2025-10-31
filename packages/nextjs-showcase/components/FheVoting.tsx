@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import { createEncryptedInput } from '@fhevm-sdk';
+import { useEncrypt } from '@fhevm-sdk';
 
 // Contract ABI for SimpleVoting_uint32
 const VOTING_CONTRACT_ABI = [
@@ -174,6 +174,9 @@ const FheVoting = ({
   const [currentPage, setCurrentPage] = useState(0);
   const CARDS_PER_PAGE = 2;
 
+  // Use adapter hook - provides automatic state management and error handling
+  const { encrypt, isEncrypting, error: encryptError } = useEncrypt();
+
   // Load sessions on component mount and when account changes
   useEffect(() => {
     if (isConnected && isInitialized) {
@@ -263,8 +266,8 @@ const FheVoting = ({
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(VOTING_CONTRACT_ADDRESS, VOTING_CONTRACT_ABI, signer);
       
-      // Create encrypted vote
-      const encryptedVote = await createEncryptedInput(VOTING_CONTRACT_ADDRESS, account, vote === 'yes' ? 1 : 0);
+      // Create encrypted vote using the encrypt hook - handles loading state and errors automatically
+      const encryptedVote = await encrypt(VOTING_CONTRACT_ADDRESS, account, vote === 'yes' ? 1 : 0);
       
       // Use the encrypted data and proof from the FHEVM SDK
       const tx = await contract.vote(sessionId, encryptedVote.encryptedData, encryptedVote.proof);
@@ -487,10 +490,11 @@ const FheVoting = ({
                   {selectedVote && (
                     <button
                       onClick={() => castVote(session.id, selectedVote)}
-                      disabled={isVoting}
+                      disabled={isVoting || isEncrypting}
                       className="w-full btn-primary"
+                      title={encryptError || undefined}
                     >
-                      {isVoting ? (
+                      {(isVoting || isEncrypting) ? (
                         <svg className="w-4 h-4 animate-spin mr-2" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
@@ -500,7 +504,7 @@ const FheVoting = ({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                       )}
-                      Submit {selectedVote.toUpperCase()} Vote
+                      {(isVoting || isEncrypting) ? 'Processing...' : `Submit ${selectedVote.toUpperCase()} Vote`}
                     </button>
                   )}
                 </div>

@@ -1,6 +1,42 @@
-# 🚀 Next.js FHEVM Showcase
+# ⚡ Next.js FHEVM Showcase
 
-A Next.js application demonstrating the Universal FHEVM SDK with real FHEVM interactions on Sepolia testnet.
+A Next.js application demonstrating the **Universal FHEVM SDK** using React adapter hooks with real FHEVM interactions on Sepolia testnet.
+
+## 🏗️ **Architecture**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  Next.js Showcase                             │
+│                                                               │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │  page.tsx    │  │ FheCounter   │  │ FheRatings   │      │
+│  │  (App Router)│  │              │  │              │      │
+│  │              │  │ useEncrypt() │  │ useEncrypt() │      │
+│  │ useWallet()  │  │ useDecrypt() │  │ useDecrypt() │      │
+│  │ useFhevm()   │  │ useContract()│  │              │      │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
+│         │                 │                  │               │
+│         └─────────────────┼──────────────────┘              │
+│                           │                                   │
+│                   ┌───────▼────────┐                        │
+│                   │  @fhevm-sdk    │                        │
+│                   │  React Adapter │                        │
+│                   │                 │                        │
+│                   │ ┌────────────┐ │                        │
+│                   │ │ useWallet  │ │                        │
+│                   │ │ useFhevm   │ │                        │
+│                   │ │ useEncrypt │ │                        │
+│                   │ │ useDecrypt │ │                        │
+│                   │ │ useContract│ │                        │
+│                   │ └─────┬───────┘ │                        │
+│                   └───────┼─────────┘                        │
+│                           │                                   │
+│                   ┌───────▼────────┐                        │
+│                   │   Core SDK     │                        │
+│                   │  (fhevm-sdk)   │                        │
+│                   └─────────────────┘                        │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ## 🚀 **Quick Start**
 
@@ -19,70 +55,88 @@ pnpm dev
 
 ## ✨ **Features**
 
-- ✅ **Real FHEVM interactions** - Local SDK package
+- ✅ **Next.js App Router** - Modern Next.js 15 with App Router
+- ✅ **React Hooks** - Same hooks as React showcase
+- ✅ **Real FHEVM interactions** - CDN-based FHEVM SDK
 - ✅ **EIP-712 user decryption** - Proper authentication
 - ✅ **Real contract interactions** - Sepolia testnet
-- ✅ **Provider pattern** - Clean state management
 - ✅ **Beautiful UI** - Zama theme (yellow & black)
+- ✅ **TypeScript support** - Full type safety
+- ✅ **Server-side ready** - Production optimized
 
 ## 🔧 **Tech Stack**
 
-- **Next.js 15** - React framework with App Router
+- **Next.js 15** - Modern Next.js with App Router
 - **TypeScript** - Full type safety
+- **React 18** - Modern React with hooks
 - **Ethers.js** - Ethereum interactions
-- **@fhevm-sdk** - Universal FHEVM SDK with wagmi-like hooks
-- **Provider Pattern** - Clean state management
+- **@fhevm-sdk** - Universal FHEVM SDK with React hooks adapter
+- **Tailwind CSS** - Utility-first CSS
 
-## 🎣 **Wagmi-like Hooks Usage**
+## 🎣 **Adapter Usage**
 
-This showcase demonstrates the new wagmi-like hooks from the Universal FHEVM SDK:
+This showcase uses the same React hooks as the React showcase, but in a Next.js environment:
+
+### **Main Page (`app/page.tsx`)**
 
 ```typescript
-import { useWallet, useFhevm, useContract, useFhevmOperations } from '@fhevm-sdk';
+'use client';
 
-function MyComponent() {
+import { useWallet, useFhevm } from '@fhevm-sdk';
+
+export default function HomePage() {
   // Wallet connection hook
-  const { address, isConnected, connect, disconnect } = useWallet();
+  const {
+    address,
+    chainId,
+    isConnected,
+    connect: connectWallet,
+    disconnect: disconnectWallet,
+    error: walletError
+  } = useWallet();
   
-  // FHEVM instance management
-  const { fheInstance, isInitialized, initialize, error } = useFhevm();
+  // FHEVM instance hook
+  const {
+    status: fhevmStatus,
+    initialize: initializeFhevm,
+    error: fhevmError
+  } = useFhevm();
   
-  // Contract interactions
-  const { contract, isReady, error: contractError } = useContract(contractAddress, abi);
+  // Auto-initialize FHEVM when wallet connects
+  useEffect(() => {
+    if (isConnected && fhevmStatus === 'idle') {
+      initializeFhevm();
+    }
+  }, [isConnected, fhevmStatus, initializeFhevm]);
   
-  // FHEVM operations (encrypt, decrypt, execute)
-  const { encrypt, decrypt, executeTransaction, isBusy, message } = useFhevmOperations();
-  
-  // Use the hooks in your component...
+  // Rest of component...
 }
 ```
 
-### **Provider Pattern**
+### **Component Usage**
 
-The Next.js showcase uses a provider pattern to wrap the hooks:
+Components use the same hooks as React showcase:
+- `FheCounter.tsx` - Uses `useEncrypt`, `useDecrypt`, `useContract`
+- `FheRatings.tsx` - Uses `useEncrypt`, `useDecrypt`
+- `FheVoting.tsx` - Uses `useEncrypt`
 
-```typescript
-// app/providers/FhevmProvider.tsx
-import { useWallet, useFhevm, useContract, useFhevmOperations } from '@fhevm-sdk';
+## 🎯 **Available Hooks**
 
-export function FhevmProvider({ children }) {
-  const wallet = useWallet();
-  const fhevm = useFhevm();
-  const contract = useContract('', []);
-  const operations = useFhevmOperations();
-  
-  // Provide combined context...
-}
-```
+Same as React showcase:
+- **`useWallet()`** - Wallet connection management
+- **`useFhevm()`** - FHEVM instance management
+- **`useContract(address, abi)`** - Contract instance management
+- **`useEncrypt()`** - Encryption operations
+- **`useDecrypt()`** - Decryption operations
 
 ## 🎯 **What It Demonstrates**
 
-1. **Wallet Connection** - MetaMask integration
-2. **FHEVM Provider** - Context-based state management
-3. **Contract Reading** - Real blockchain data
-4. **EIP-712 Decryption** - User authentication
-5. **Encrypted Input** - Contract interactions
-6. **Transaction Sending** - Real blockchain transactions
+1. **Next.js Integration** - Using FHEVM SDK in Next.js App Router
+2. **Client Components** - Using `'use client'` directive
+3. **React Hooks** - Same adapter hooks as React showcase
+4. **Real FHEVM interactions** - CDN-based FHEVM SDK
+5. **EIP-712 authentication** - Proper user decryption
+6. **Real contract interactions** - Sepolia testnet
 
 ## 🌐 **Live Demo**
 
@@ -90,37 +144,10 @@ export function FhevmProvider({ children }) {
 - **Contract:** `0xead137D42d2E6A6a30166EaEf97deBA1C3D1954e`
 - **Network:** Sepolia testnet (Chain ID: 11155111)
 
-## 📱 **Usage**
+## 📱 **Usage Flow**
 
-1. **Connect Wallet** - Click "Connect Wallet" button
-2. **Get Count** - Read encrypted count from contract
-3. **Decrypt Count** - Use EIP-712 to decrypt the value
-4. **Increment/Decrement** - Send transactions to modify count
-
-## 🔐 **FHEVM Features**
-
-- **Local SDK package** - No CDN dependencies
-- **Provider pattern** - Clean state management
-- **Real encryption** - Actual FHEVM encryption
-- **EIP-712 signing** - User authentication
-- **Contract interactions** - Real blockchain calls
-
-## 🏗️ **Architecture**
-
-```
-app/
-├── layout.tsx              # Root layout with CDN script
-├── page.tsx                # Main showcase page
-└── providers/
-    └── FhevmProvider.tsx   # FHEVM context provider
-```
-
-## 🎨 **UI Components**
-
-- **Wallet Connection** - MetaMask integration
-- **FHEVM Status** - SDK initialization status
-- **Counter Demo** - Real FHEVM interactions
-- **Transaction Status** - Real-time updates
+Same as React showcase:
+1. Connect wallet → Auto-initialize FHEVM → Use hooks for operations
 
 ## 🛠️ **Development**
 
@@ -138,24 +165,20 @@ pnpm start
 ## 📦 **Dependencies**
 
 - `next` - Next.js framework
-- `react` - React library
+- `react` - React framework
 - `ethers` - Ethereum interactions
-- `@zama-fhe/relayer-sdk` - FHEVM SDK package
+- `@fhevm-sdk` - Universal FHEVM SDK with React hooks
 - `typescript` - Type safety
-
-## 🔧 **Configuration**
-
-- **Next.js Config** - Optimized for FHEVM SDK
-- **TypeScript** - Full type safety
-- **CDN Script** - FHEVM SDK from Zama's CDN
-- **Provider Pattern** - Clean state management
+- `tailwindcss` - CSS framework
 
 ## 🎉 **Success Metrics**
 
 - ✅ **Real FHEVM interactions** - No mocks
+- ✅ **Next.js integration** - Works with App Router
+- ✅ **React hooks integration** - Same adapter as React showcase
 - ✅ **EIP-712 authentication** - Proper user decryption
 - ✅ **Live contract integration** - Sepolia testnet
-- ✅ **Provider pattern** - Clean architecture
-- ✅ **Complete workflow** - From reading to transactions
+- ✅ **Beautiful UI** - Zama theme
+- ✅ **Production ready** - Optimized build
 
 **Ready for production use!** 🚀

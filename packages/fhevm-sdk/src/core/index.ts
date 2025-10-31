@@ -3,8 +3,6 @@
  * Simple, clean implementation that matches showcase APIs
  */
 
-// Core FHEVM functionality
+// Core FHEVM functionality - All functions consolidated in fhevm.ts
 export * from './fhevm.js';
-export * from './encryption.js';
-export * from './decryption.js';
 export * from './contracts.js';

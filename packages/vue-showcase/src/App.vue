@@ -68,13 +68,13 @@
                 </svg>
                 <h2>Wallet Connection</h2>
               </div>
-              <button v-if="!isConnected" @click="connectWallet" class="btn-primary">
+              <button v-if="!isConnected" @click="handleConnectWallet" class="btn-primary">
                 <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
                 Connect
               </button>
-              <button v-else @click="disconnectWallet" class="btn-danger">
+              <button v-else @click="handleDisconnectWallet" class="btn-danger">
                 Disconnect
               </button>
             </div>
@@ -162,7 +162,7 @@
                     <span class="info-value code-text">{{ account }}</span>
                   </div>
                 </div>
-                <div class="info-card">
+                  <div class="info-card">
                   <div class="info-row">
                     <span class="info-label">Chain ID</span>
                     <span class="info-value">{{ chainId }}</span>
@@ -170,8 +170,8 @@
                 </div>
                 <div class="info-card">
                   <div class="info-column">
-                    <span class="info-label">Contract</span>
-                    <div v-if="contractAddress === 'Not supported chain'" class="contract-error">
+                    <span class="info-label">Contract Address</span>
+                    <div v-if="contractAddress === 'Not supported chain' || !contractAddress" class="contract-error">
                       <span class="error-text">Not supported chain</span>
                       <button 
                         @click="switchNetworkToSepolia"
@@ -192,13 +192,29 @@
                   </div>
                 </div>
                 
-                <!-- Network error display -->
+                <!-- Error displays -->
                 <div v-if="networkError" class="info-card network-error">
                   <div class="error-content">
                     <svg class="error-icon" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
                     </svg>
                     <span class="error-message">{{ networkError }}</span>
+                  </div>
+                </div>
+                <div v-if="walletError.value" class="info-card network-error">
+                  <div class="error-content">
+                    <svg class="error-icon" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    <span class="error-message">Wallet: {{ walletError.value }}</span>
+                  </div>
+                </div>
+                <div v-if="fhevmError.value" class="info-card network-error">
+                  <div class="error-content">
+                    <svg class="error-icon" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                    <span class="error-message">FHEVM: {{ fhevmError.value }}</span>
                   </div>
                 </div>
               </div>
@@ -242,9 +258,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { ethers } from 'ethers'
-import { initializeFheInstance, publicDecrypt } from '@fhevm-sdk'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useWalletVue, useFhevmVue } from '@fhevm-sdk'
 import FheCounter from './components/FheCounter.vue'
 import FheRatings from './components/FheRatings.vue'
 import FheVoting from './components/FheVoting.vue'
@@ -268,75 +283,44 @@ const SEPOLIA_CONFIG = {
   blockExplorerUrls: ['https://sepolia.etherscan.io/'],
 }
 
+// Use Vue composables
+const {
+  address: account,
+  chainId,
+  isConnected,
+  connect: connectWallet,
+  disconnect: disconnectWallet,
+  error: walletError
+} = useWalletVue()
+
+const {
+  status: fhevmStatus,
+  initialize: initializeFhevm,
+  error: fhevmError
+} = useFhevmVue()
+
 // Reactive state
-const account = ref<string>('')
-const chainId = ref<number>(0)
-const isConnected = ref(false)
-const fheInstance = ref<any>(null)
 const message = ref<string>('')
-const fhevmStatus = ref<'idle' | 'loading' | 'ready' | 'error'>('idle')
-const fhevmError = ref<string>('')
-
-const contractAddress = computed(() => 
-  CONTRACT_ADDRESSES[chainId.value as keyof typeof CONTRACT_ADDRESSES] || 'Not supported chain'
-)
-
-// Network switching state
 const isSwitchingNetwork = ref(false)
 const networkError = ref<string>('')
 
+const contractAddress = computed(() => {
+  const id = chainId.value
+  return CONTRACT_ADDRESSES[id as keyof typeof CONTRACT_ADDRESSES] || 'Not supported chain'
+})
 
+// Auto-initialize FHEVM when wallet connects
+watch(() => isConnected.value, (newValue) => {
+  if (newValue && fhevmStatus.value === 'idle') {
+    initializeFhevm()
+  }
+})
 
-// Initialize FHEVM
-const initializeFhevm = async () => {
-  try {
-    fhevmStatus.value = 'loading'
-    fhevmError.value = ''
-    const instance = await initializeFheInstance()
-    fheInstance.value = instance
-    fhevmStatus.value = 'ready'
-    console.log('✅ FHEVM initialized for Vue!')
-  } catch (error) {
-    console.error('❌ FHEVM initialization failed:', error)
-    fhevmStatus.value = 'error'
-    fhevmError.value = error instanceof Error ? error.message : 'Unknown error'
-  }
-}
-
-// Wallet connection
-const connectWallet = async () => {
-  console.log('Attempting to connect wallet...')
-  
-  if (typeof window === 'undefined') {
-    console.error('Window is undefined - not in browser environment')
-    return
-  }
-  
-  if (!window.ethereum) {
-    console.error('No Ethereum provider found. Please install MetaMask or connect a wallet.')
-    alert('Please install MetaMask or connect a wallet to use this app.')
-    return
-  }
-  
-  try {
-    console.log('Requesting accounts...')
-    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
-    console.log('Accounts received:', accounts)
-    
-    const chainIdHex = await window.ethereum.request({ method: 'eth_chainId' })
-    console.log('Chain ID:', chainIdHex)
-    
-    account.value = accounts[0]
-    chainId.value = parseInt(chainIdHex, 16)
-    isConnected.value = true
-    
-    console.log('Wallet connected successfully!')
-    
-    // Initialize FHEVM after wallet connection
+// Handle wallet connection
+const handleConnectWallet = async () => {
+  await connectWallet()
+  if (isConnected.value && fhevmStatus.value === 'idle') {
     await initializeFhevm()
-  } catch (error) {
-    console.error('Wallet connection failed:', error)
-    alert(`Wallet connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 
@@ -358,9 +342,7 @@ const switchNetworkToSepolia = async () => {
       params: [{ chainId: SEPOLIA_CONFIG.chainId }],
     })
 
-    // Update chain ID after successful switch
-    const chainIdHex = await window.ethereum.request({ method: 'eth_chainId' })
-    chainId.value = parseInt(chainIdHex, 16)
+    // Chain ID will be updated automatically by useWalletVue hook
     message.value = 'Successfully switched to Sepolia!'
     
     console.log('✅ Network switched to Sepolia')
@@ -377,9 +359,7 @@ const switchNetworkToSepolia = async () => {
           params: [SEPOLIA_CONFIG],
         })
         
-        // Update chain ID after adding
-        const chainIdHex = await window.ethereum.request({ method: 'eth_chainId' })
-        chainId.value = parseInt(chainIdHex, 16)
+        // Chain ID will be updated automatically by useWalletVue hook
         message.value = 'Sepolia network added and switched!'
         
         console.log('✅ Sepolia network added and switched')
@@ -398,19 +378,9 @@ const switchNetworkToSepolia = async () => {
   }
 }
 
-// Disconnect wallet
-const disconnectWallet = () => {
-  account.value = ''
-  chainId.value = 0
-  isConnected.value = false
-  fheInstance.value = null
-  countHandle.value = ''
-  decryptedCount.value = null
-  isIncrementing.value = false
-  isDecrementing.value = false
-  isDecrypting.value = false
-  fhevmStatus.value = 'idle'
-  fhevmError.value = ''
+// Handle wallet disconnection
+const handleDisconnectWallet = () => {
+  disconnectWallet()
   message.value = ''
   networkError.value = ''
   isSwitchingNetwork.value = false

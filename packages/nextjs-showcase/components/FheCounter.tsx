@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ethers } from 'ethers';
-import { decryptValue, createEncryptedInput } from '@fhevm-sdk';
+import { useDecrypt, useEncrypt, useContract } from '@fhevm-sdk';
 
 // Contract configuration
 const CONTRACT_ADDRESSES = {
@@ -52,19 +52,24 @@ export default function FheCounter({ account, chainId, isConnected, isInitialize
   const [countHandle, setCountHandle] = useState<string>('');
   const [decryptedCount, setDecryptedCount] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isDecrypting, setIsDecrypting] = useState(false);
 
   const contractAddress = CONTRACT_ADDRESSES[chainId as keyof typeof CONTRACT_ADDRESSES] || 'Not supported chain';
 
+  // Use adapter hooks - they provide state management and error handling
+  const { decrypt, isDecrypting, error: decryptError } = useDecrypt();
+  const { encrypt, isEncrypting, error: encryptError } = useEncrypt();
+  const { contract: readContract } = useContract(
+    contractAddress !== 'Not supported chain' ? contractAddress : '',
+    CONTRACT_ABI
+  );
+
   // Get encrypted count from contract
   const getCount = async () => {
-    if (!isConnected || !contractAddress || !window.ethereum) return;
+    if (!isConnected || !contractAddress || !window.ethereum || !readContract) return;
     
     try {
       onMessage('Reading contract...');
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const contract = new ethers.Contract(contractAddress, CONTRACT_ABI, provider);
-      const result = await contract.getCount();
+      const result = await readContract.getCount();
       setCountHandle(result);
       onMessage('Contract read successfully!');
       setTimeout(() => onMessage(''), 3000);
@@ -74,31 +79,29 @@ export default function FheCounter({ account, chainId, isConnected, isInitialize
     }
   };
 
-  // Decrypt count
+  // Decrypt count using the adapter hook
   const handleDecrypt = async () => {
-    if (!countHandle || !window.ethereum) return;
+    if (!countHandle || !window.ethereum || !contractAddress) return;
     
     try {
-      setIsDecrypting(true);
       onMessage('Decrypting with EIP-712 user decryption...');
       
       // Get signer for EIP-712 signature
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       
-      const result = await decryptValue(countHandle, contractAddress, signer);
+      // Use the decrypt hook - it handles loading state and errors automatically
+      const result = await decrypt(countHandle, contractAddress, signer);
       setDecryptedCount(result);
       onMessage('EIP-712 decryption completed!');
       setTimeout(() => onMessage(''), 3000);
     } catch (error) {
       console.error('Decryption failed:', error);
-      onMessage('Decryption failed');
-    } finally {
-      setIsDecrypting(false);
+      onMessage(decryptError || 'Decryption failed');
     }
   };
 
-  // Increment counter
+  // Increment counter using the adapter hooks
   const incrementCounter = async () => {
     if (!isConnected || !contractAddress || !window.ethereum) return;
     
@@ -111,7 +114,8 @@ export default function FheCounter({ account, chainId, isConnected, isInitialize
       const contract = new ethers.Contract(contractAddress, CONTRACT_ABI, signer);
       
       onMessage('Encrypting input...');
-      const encryptedInput = await createEncryptedInput(contractAddress, account, 1);
+      // Use the encrypt hook - it handles loading state and errors automatically
+      const encryptedInput = await encrypt(contractAddress, account, 1);
       
       onMessage('Sending transaction...');
       const tx = await contract.increment(encryptedInput.encryptedData, encryptedInput.proof);
@@ -125,13 +129,13 @@ export default function FheCounter({ account, chainId, isConnected, isInitialize
       setTimeout(() => onMessage(''), 3000);
     } catch (error) {
       console.error('Increment failed:', error);
-      onMessage('Increment failed');
+      onMessage(encryptError || 'Increment failed');
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Decrement counter
+  // Decrement counter using the adapter hooks
   const decrementCounter = async () => {
     if (!isConnected || !contractAddress || !window.ethereum) return;
     
@@ -144,7 +148,8 @@ export default function FheCounter({ account, chainId, isConnected, isInitialize
       const contract = new ethers.Contract(contractAddress, CONTRACT_ABI, signer);
       
       onMessage('Encrypting input...');
-      const encryptedInput = await createEncryptedInput(contractAddress, account, 1);
+      // Use the encrypt hook - it handles loading state and errors automatically
+      const encryptedInput = await encrypt(contractAddress, account, 1);
       
       onMessage('Sending transaction...');
       const tx = await contract.decrement(encryptedInput.encryptedData, encryptedInput.proof);
@@ -158,7 +163,7 @@ export default function FheCounter({ account, chainId, isConnected, isInitialize
       setTimeout(() => onMessage(''), 3000);
     } catch (error) {
       console.error('Decrement failed:', error);
-      onMessage('Decrement failed');
+      onMessage(encryptError || 'Decrement failed');
     } finally {
       setIsProcessing(false);
     }
@@ -204,6 +209,7 @@ export default function FheCounter({ account, chainId, isConnected, isInitialize
             onClick={handleDecrypt}
             disabled={!countHandle || isDecrypting}
             className="btn-secondary w-full"
+            title={decryptError || undefined}
           >
             {isDecrypting ? (
               <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -233,8 +239,9 @@ export default function FheCounter({ account, chainId, isConnected, isInitialize
         <div className="grid grid-cols-2 gap-4">
           <button
             onClick={incrementCounter}
-            disabled={isProcessing}
+            disabled={isProcessing || isEncrypting}
             className="btn-primary"
+            title={encryptError || undefined}
           >
             {isProcessing ? (
               <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -246,12 +253,13 @@ export default function FheCounter({ account, chainId, isConnected, isInitialize
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
               </svg>
             )}
-            {isProcessing ? 'Processing...' : 'Increment'}
+            {(isProcessing || isEncrypting) ? 'Processing...' : 'Increment'}
           </button>
           <button
             onClick={decrementCounter}
-            disabled={isProcessing}
+            disabled={isProcessing || isEncrypting}
             className="btn-danger"
+            title={encryptError || undefined}
           >
             {isProcessing ? (
               <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -263,7 +271,7 @@ export default function FheCounter({ account, chainId, isConnected, isInitialize
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4"/>
               </svg>
             )}
-            {isProcessing ? 'Processing...' : 'Decrement'}
+            {(isProcessing || isEncrypting) ? 'Processing...' : 'Decrement'}
           </button>
         </div>
       </div>

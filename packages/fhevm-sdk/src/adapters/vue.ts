@@ -6,7 +6,7 @@
 // Vue types will be available when used in Vue projects
 // @ts-ignore
 import { ref, computed } from 'vue';
-import { initializeFheInstance, createEncryptedInput, requestUserDecryption, fetchPublicDecryption } from '../core/index.js';
+import { initializeFheInstance, createEncryptedInput, decryptValue, publicDecrypt as corePublicDecrypt } from '../core/index.js';
 import { Signer } from 'ethers';
 
 // Wallet composable
@@ -128,7 +128,7 @@ export function useDecryptVue() {
     try {
       isDecrypting.value = true;
       error.value = '';
-      const result = await requestUserDecryption(contractAddress, signer, ciphertextHandle);
+      const result = await decryptValue(ciphertextHandle, contractAddress, signer);
       return result;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Decryption failed';
@@ -138,11 +138,11 @@ export function useDecryptVue() {
     }
   };
 
-  const publicDecrypt = async (encryptedData: any) => {
+  const publicDecrypt = async (encryptedData: any): Promise<number | null> => {
     try {
       isDecrypting.value = true;
       error.value = '';
-      const result = await fetchPublicDecryption(encryptedData);
+      const result: number = await corePublicDecrypt(encryptedData);
       return result;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Public decryption failed';
@@ -217,7 +217,7 @@ export function useFhevmOperationsVue() {
       isDecrypting.value = true;
       decryptError.value = '';
       message.value = 'Decrypting value...';
-      const result = await requestUserDecryption(contractAddress, signer, ciphertextHandle);
+      const result = await decryptValue(ciphertextHandle, contractAddress, signer);
       message.value = 'Decryption successful';
       return result;
     } catch (err) {
@@ -229,12 +229,12 @@ export function useFhevmOperationsVue() {
     }
   };
 
-  const publicDecrypt = async (encryptedData: any) => {
+  const publicDecrypt = async (encryptedData: any): Promise<number | null> => {
     try {
       isDecrypting.value = true;
       decryptError.value = '';
       message.value = 'Public decrypting value...';
-      const result = await fetchPublicDecryption(encryptedData);
+      const result: number = await corePublicDecrypt(encryptedData);
       message.value = 'Public decryption successful';
       return result;
     } catch (err) {

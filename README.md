@@ -1,6 +1,6 @@
 # 🔐 Universal FHEVM SDK
 
-A framework-agnostic frontend toolkit that helps developers run confidential dApps with ease. Built for the Zama Bounty Program - Universal FHEVM SDK Challenge.
+A framework-agnostic toolkit that helps developers build confidential dApps with ease. Built with a modular adapter architecture that works seamlessly across React, Next.js, Vue, and Node.js environments.
 
 ## 🌐 **Live Examples**
 
@@ -9,478 +9,482 @@ All examples are running with **real FHEVM interactions** on Sepolia testnet:
 - **![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB) React Showcase:** [https://react-showcase-1738.up.railway.app/](https://react-showcase-1738.up.railway.app/)
 - **![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white) Next.js Showcase:** [https://nextjs-showcase-1661.up.railway.app/](https://nextjs-showcase-1661.up.railway.app/)
 - **![Vue.js](https://img.shields.io/badge/Vue.js-35495E?style=for-the-badge&logo=vue.js&logoColor=4FC08D) Vue Showcase:** [https://vue-showcase-2780.up.railway.app/](https://vue-showcase-2780.up.railway.app/)
-- **![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white) Node.js Showcase:** [packages/node-showcase/](packages/node-showcase/) - **Proves our FHEVM SDK works in Node.js!**
+- **![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white) Node.js Showcase:** [packages/node-showcase/](packages/node-showcase/)
 
 **Contract Details:**
 - **FHE Counter Contract:** `0xead137D42d2E6A6a30166EaEf97deBA1C3D1954e`
 - **Ratings Contract:** `0xcA2430F1B112EC25cF6b6631bb40039aCa0C86e0`
 - **Voting Contract:** `0x7294A541222ce449faa2B8A7214C571b0fCAb52E`
 - **Network:** Sepolia testnet (Chain ID: 11155111)
-- **Features:** Real encryption, decryption, contract interactions
 
 ## 🌍 **Languages / Langues / 语言**
 [![English](https://img.shields.io/badge/English-🇺🇸-blue)](README.md)
 [![Français](https://img.shields.io/badge/Français-🇫🇷-red)](README.fr.md)
 [![中文](https://img.shields.io/badge/中文-🇨🇳-green)](README.zh.md)
 
-## 🏆 **Bounty Requirements Met**
+## 📐 **Architecture Overview**
 
-### **✅ 1. Can be imported into any dApp**
-**Implementation:** Universal SDK with framework adapters
-- **React:** `import { useWallet, useFhevm, useContract } from '@fhevm-sdk'` ([src/adapters/react.ts](packages/fhevm-sdk/src/adapters/react.ts))
-- **Next.js:** `import { useWallet, useFhevm, useContract } from '@fhevm-sdk'` ([src/adapters/react.ts](packages/fhevm-sdk/src/adapters/react.ts))
-- **Vue:** `import { useWalletVue, useFhevmVue } from '@fhevm-sdk'` ([src/adapters/vue.ts](packages/fhevm-sdk/src/adapters/vue.ts))
-- **Node.js:** `import { FhevmNode } from '@fhevm-sdk'` ([src/adapters/node.ts](packages/fhevm-sdk/src/adapters/node.ts))
-- **Vanilla JS:** `import { FhevmVanilla } from '@fhevm-sdk'` ([src/adapters/vanilla.ts](packages/fhevm-sdk/src/adapters/vanilla.ts))
+### **SDK Architecture**
 
-### **✅ 2. Utilities for initialization, encrypted inputs, and decryption flows**
-**Implementation:** Complete FHEVM operations with EIP-712 signing
-- **Initialization:** `initializeFheInstance()` ([src/core/fhevm.ts:15-35](packages/fhevm-sdk/src/core/fhevm.ts#L15-L35))
-- **Encrypted Inputs:** `createEncryptedInput()` ([src/core/encryption.ts:31-75](packages/fhevm-sdk/src/core/encryption.ts#L31-L75))
-- **User Decryption (EIP-712):** `requestUserDecryption()` ([src/core/decryption.ts:12-59](packages/fhevm-sdk/src/core/decryption.ts#L12-L59))
-- **Public Decryption:** `fetchPublicDecryption()` ([src/core/decryption.ts:64-69](packages/fhevm-sdk/src/core/decryption.ts#L64-L69))
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Universal FHEVM SDK                          │
+│            packages/fhevm-sdk/                                   │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        │                     │                     │
+┌───────▼────────┐  ┌─────────▼────────┐  ┌────────▼────────┐
+│    CORE        │  │    ADAPTERS       │  │    SHOWCASES    │
+│  src/core/     │  │  src/adapters/    │  │  packages/      │
+│                │  │                  │  │                 │
+│ ┌───────────┐  │  │ ┌─────────────┐ │  │ ┌─────────────┐ │
+│ │ fhevm.ts  │  │  │ │ react.ts     │ │  │ │react-showcase│ │
+│ │           │  │  │ │ (re-exports)│ │  │ │             │ │
+│ │initializeFhe│ │  │ │             │ │  │ │ App.tsx     │ │
+│ │createEncrypt│ │  │ │useWallet.ts │ │  │ │ FheCounter  │ │
+│ │decryptValue │ │  │ │useFhevm.ts  │ │  │ │ FheRatings   │ │
+│ │publicDecrypt│ │  │ │useContract  │ │  │ │ FheVoting    │ │
+│ │ test/        │ │
+│ └───────────┘  │  │ │useEncrypt.ts│ │  │ └─────────────┘ │
+│                │  │ │useDecrypt.ts│ │  │                 │
+│ ┌───────────┐  │  │ │useFhevmOps │ │  │ ┌─────────────┐ │
+│ │contracts.ts│ │  │ └─────────────┘ │  │ │nextjs-showcase│
+│ │FhevmContract│ │  │                 │  │ │             │ │
+│ └───────────┘  │  │ ┌─────────────┐ │  │ │ page.tsx    │ │
+│                │  │ │ vue.ts       │ │  │ │ components/  │ │
+│ ┌───────────┐  │  │ │             │ │  │ │ test/        │ │
+│ │index.ts   │  │  │ │useWalletVue │ │  │ │ FHECounter   │ │
+│ │(exports)  │  │  │ │useFhevmVue  │ │  │ │ FHERatings   │ │
+│ └───────────┘  │  │ │useContractVue│ │ │ │ SimpleVoting │ │
+│                │  │ │useEncryptVue │ │ │ │             │ │
+│                │  │ │useDecryptVue │ │ │ │             │ │
+│                │  │ │useFhevmOpsVue│ │ │ │             │ │
+│                │  │ └─────────────┘ │  │ └─────────────┘ │
+│                │  │                 │  │                 │
+│                │  │ ┌─────────────┐ │  │ ┌─────────────┐ │
+│                │  │ │ node.ts     │ │  │ │vue-showcase│ │
+│                │  │ │             │ │  │ │             │ │
+│                │  │ │FhevmNode    │ │  │ │ App.vue     │ │
+│                │  │ │ class       │ │  │ │ components/ │ │
+│                │  │ └─────────────┘ │  │ │ test/       │ │
+│                │  │                 │  │ │ FHECounter  │ │
+│                │  │                 │  │ │ FHERatings  │ │
+│                │  │                 │  │ │ SimpleVoting│ │
+│                │  │                 │  │ └─────────────┘ │
+│                │  │                 │  │                 │
+│                │  │                 │  │ ┌─────────────┐ │
+│                │  │                 │  │ │node-showcase│ │
+│                │  │                 │  │ │             │ │
+│                │  │                 │  │ │ index.ts    │ │
+│                │  │                 │  │ │ counter.ts   │ │
+│                │  │                 │  │ │ voting.ts    │ │
+│                │  │                 │  │ │ ratings.ts    │ │
+│                │  │                 │  │ └─────────────┘ │
+└────────────────┘  └─────────────────┘  └─────────────────┘
+```
 
-### **✅ 3. Wagmi-like modular API structure**
-**Implementation:** Framework-specific hooks and composables
-- **React/Next.js Hooks:** `useWallet()`, `useFhevm()`, `useContract()`, `useFhevmOperations()` ([src/adapters/react.ts:20-265](packages/fhevm-sdk/src/adapters/react.ts#L20-L265))
-- **Vue Composables:** `useWalletVue()`, `useFhevmVue()`, `useContractVue()` ([src/adapters/vue.ts:15-200](packages/fhevm-sdk/src/adapters/vue.ts#L15-L200))
-- **Core Independence:** Framework adapters import from core modules ([src/core/index.ts](packages/fhevm-sdk/src/core/index.ts))
+### **Data Flow Architecture**
 
-### **✅ 4. Reusable components covering different encryption/decryption scenarios**
-**Implementation:** Multiple scenarios with real-world examples
-- **Private User Decryption:** EIP-712 signature required ([React showcase:151-169](packages/react-showcase/src/App.tsx#L151-L169))
-- **Public Decryption:** No signature required ([React showcase:238-264](packages/react-showcase/src/App.tsx#L238-L264))
-- **Input Encryption:** For contract interactions ([React showcase:183-189](packages/react-showcase/src/App.tsx#L183-L189))
-- **Multi-value Encryption:** `encryptValue()` for arrays ([src/core/encryption.ts:11-26](packages/fhevm-sdk/src/core/encryption.ts#L11-L26))
-- **Transaction Execution:** Complete encrypted transaction flow ([src/adapters/react.ts:219-242](packages/fhevm-sdk/src/adapters/react.ts#L219-L242))
+```
+┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
+│ react-showcase  │      │ vue-showcase    │      │ node-showcase   │
+│                 │      │                 │      │                 │
+│ App.tsx         │      │ App.vue         │      │ index.ts        │
+│ FheCounter.tsx  │      │ FheCounter.vue  │      │ counter.ts      │
+│ FheRatings.tsx  │      │ FheRatings.vue  │      │ voting.ts       │
+│ FheVoting.tsx   │      │ FheVoting.vue   │      │ ratings.ts      │
+└────────┬────────┘      └────────┬────────┘      └────────┬────────┘
+         │                        │                        │
+         │ import { useWallet,    │ import { useWalletVue,│ import { FhevmNode
+         │         useFhevm,      │         useFhevmVue } │         } from
+         │         useEncrypt,    │         } from         │         '@fhevm-sdk'
+         │         useDecrypt }   │         '@fhevm-sdk'   │
+         │ from '@fhevm-sdk'      │                        │
+         │                        │                        │
+         └────────────────────────┼────────────────────────┘
+                                  │
+                    ┌─────────────▼─────────────┐
+                    │   @fhevm-sdk/src/          │
+                    │                           │
+                    │   ┌─────────────────────┐ │
+                    │   │  adapters/react.ts  │ │
+                    │   │  adapters/vue.ts     │ │
+                    │   │  adapters/node.ts   │ │
+                    │   └──────────┬──────────┘ │
+                    │              │            │
+                    │   ┌──────────▼──────────┐ │
+                    │   │   core/index.ts     │ │
+                    │   │   core/fhevm.ts     │ │
+                    │   │   core/contracts.ts │ │
+                    │   └──────────┬──────────┘ │
+                    └──────────────┼────────────┘
+                                   │
+                    ┌──────────────▼──────────────┐
+                    │      Zama Relayer SDK       │
+                    │   (@zama-fhe/relayer-sdk)   │
+                    │                             │
+                    │   ┌──────────────────────┐ │
+                    │   │ createInstance()      │ │
+                    │   │ createEncryptedInput │ │
+                    │   │ decryptValue()       │ │
+                    │   │ publicDecrypt()      │ │
+                    │   └──────────────────────┘ │
+                    └─────────────────────────────┘
+```
 
-## 📁 **Project Structure**
+## 🏗️ **Project Structure**
 
 ```
 fhevm-react-template/
 ├── packages/
-│   ├── fhevm-sdk/              # Universal FHEVM SDK Core
-│   ├── react-showcase/         # React Example (Port 3000)
-│   ├── nextjs-showcase/        # Next.js Example (Port 3001)
-│   ├── vue-showcase/           # Vue Example (Port 3003)
-│   ├── node-showcase/          # Node.js CLI Example
-│   └── hardhat/                # Smart Contracts
-├── pnpm-workspace.yaml         # Monorepo configuration
-└── README.md                   # This file
+│   ├── fhevm-sdk/                    # Universal FHEVM SDK Core
+│   │   ├── src/
+│   │   │   ├── core/                 # Core FHEVM functionality
+│   │   │   │   ├── fhevm.ts         # FHEVM client initialization
+│   │   │   │   ├── encryption.ts    # Encryption operations
+│   │   │   │   └── decryption.ts    # Decryption operations
+│   │   │   └── adapters/             # Framework-specific adapters
+│   │   │       ├── react.ts          # React hooks (re-exports)
+│   │   │       ├── useWallet.ts      # Wallet connection hook
+│   │   │       ├── useFhevm.ts       # FHEVM instance hook
+│   │   │       ├── useContract.ts    # Contract interaction hook
+│   │   │       ├── useEncrypt.ts     # Encryption hook
+│   │   │       ├── useDecrypt.ts     # Decryption hook
+│   │   │       ├── useFhevmOperations.ts  # Combined operations hook
+│   │   │       ├── vue.ts            # Vue composables
+│   │   │       └── node.ts           # Node.js class adapter
+│   │   └── dist/                     # Built output
+│   │
+│   ├── react-showcase/               # React Example
+│   │   ├── src/
+│   │   │   ├── App.tsx               # Main app (uses adapters)
+│   │   │   └── components/
+│   │   │       ├── FheCounter.tsx    # Uses useEncrypt, useDecrypt
+│   │   │       ├── FheRatings.tsx    # Uses useEncrypt, useDecrypt
+│   │   │       └── FheVoting.tsx    # Uses useEncrypt
+│   │
+│   ├── nextjs-showcase/              # Next.js Example
+│   │   ├── app/
+│   │   │   └── page.tsx              # Main page (uses adapters)
+│   │   └── components/                # Same as React showcase
+│   │
+│   ├── vue-showcase/                  # Vue Example
+│   │   ├── src/
+│   │   │   ├── App.vue               # Main app (uses composables)
+│   │   │   └── components/
+│   │   │       ├── FheCounter.vue   # Uses useEncryptVue, useDecryptVue
+│   │   │       ├── FheRatings.vue   # Uses useEncryptVue, useDecryptVue
+│   │   │       └── FheVoting.vue    # Uses useEncryptVue
+│   │
+│   ├── node-showcase/                 # Node.js Example
+│   │   ├── src/
+│   │   │   ├── index.ts              # Main entry (uses FhevmNode)
+│   │   │   ├── counter.ts            # Counter demo
+│   │   │   ├── voting.ts             # Voting demo
+│   │   │   └── ratings.ts            # Ratings demo
+│   │
+│   └── hardhat/                       # Smart Contracts
+│       ├── contracts/                 # Solidity contracts
+│       └── deploy/                    # Deployment scripts
+│
+├── pnpm-workspace.yaml                 # Monorepo configuration
+└── README.md                           # This file
+```
+
+## 🔧 **Adapter System**
+
+### **How Adapters Work**
+
+The Universal FHEVM SDK uses a **clean adapter architecture** where:
+
+1. **Core** provides framework-agnostic FHEVM operations
+2. **Adapters** wrap core functionality in framework-specific APIs
+3. **Showcases** demonstrate real-world usage with adapters
+
+### **React/Next.js Adapters**
+
+**Hooks-based API** - Similar to Wagmi pattern:
+
+```typescript
+import { useWallet, useFhevm, useEncrypt, useDecrypt, useContract } from '@fhevm-sdk';
+
+function MyComponent() {
+  // Wallet connection
+  const { address, isConnected, chainId, connect, disconnect } = useWallet();
+  
+  // FHEVM instance
+  const { status, initialize, isInitialized } = useFhevm();
+  
+  // Contract interaction
+  const { contract, isReady } = useContract(contractAddress, abi);
+  
+  // Encryption
+  const { encrypt, isEncrypting, error: encryptError } = useEncrypt();
+  
+  // Decryption
+  const { decrypt, publicDecrypt, isDecrypting, error: decryptError } = useDecrypt();
+  
+  // Usage example
+  const handleIncrement = async () => {
+    const encrypted = await encrypt(contractAddress, address, 1);
+    await contract.increment(encrypted.handles[0], encrypted.inputProof);
+  };
+  
+  return (
+    <div>
+      {!isConnected && <button onClick={connect}>Connect Wallet</button>}
+      {isConnected && <button onClick={handleIncrement}>Increment</button>}
+    </div>
+  );
+}
+```
+
+### **Vue Adapters**
+
+**Composables-based API** - Vue 3 Composition API:
+
+```typescript
+<script setup lang="ts">
+import { useWalletVue, useFhevmVue, useEncryptVue, useDecryptVue } from '@fhevm-sdk';
+
+// Wallet connection
+const { address, isConnected, chainId, connect, disconnect } = useWalletVue();
+
+// FHEVM instance
+const { status, initialize, isInitialized } = useFhevmVue();
+
+// Encryption
+const { encrypt, isEncrypting, error: encryptError } = useEncryptVue();
+
+// Decryption
+const { decrypt, publicDecrypt, isDecrypting, error: decryptError } = useDecryptVue();
+
+// Usage example
+const handleIncrement = async () => {
+  const encrypted = await encrypt.value(contractAddress, address.value, 1);
+  await contract.increment(encrypted.handles[0], encrypted.inputProof);
+};
+</script>
+
+<template>
+  <div>
+    <button v-if="!isConnected" @click="connect">Connect Wallet</button>
+    <button v-if="isConnected" @click="handleIncrement">Increment</button>
+  </div>
+</template>
+```
+
+### **Node.js Adapter**
+
+**Class-based API** - For server-side operations:
+
+```typescript
+import { FhevmNode } from '@fhevm-sdk';
+
+const fhevm = new FhevmNode({
+  rpcUrl: 'https://sepolia.infura.io/v3/YOUR_KEY',
+  privateKey: 'YOUR_PRIVATE_KEY',
+  chainId: 11155111
+});
+
+await fhevm.initialize();
+
+// Encrypt
+const encrypted = await fhevm.encrypt(contractAddress, walletAddress, 1);
+
+// Decrypt
+const decrypted = await fhevm.decrypt(handle, contractAddress);
+
+// Public decrypt
+const publicDecrypted = await fhevm.publicDecrypt(handle);
+
+// Execute transaction
+const contract = fhevm.createContract(contractAddress, abi);
+await fhevm.executeEncryptedTransaction(contract, 'increment', encrypted);
 ```
 
 ## 🚀 **Quick Start**
 
 ### **Option 1: NPX Packages (Recommended)**
-Create a new FHEVM project instantly with our NPX packages:
+
+Create a new FHEVM project instantly:
 
 ```bash
 # React
 npx create-fhevm-react my-app
 cd my-app
-npm install
-npm start
+npm install && npm start
 
 # Next.js
 npx create-fhevm-nextjs my-app
 cd my-app
-npm install
-npm run dev
+npm install && npm run dev
 
 # Vue 
 npx create-fhevm-vue my-app
 cd my-app
-npm install
-npm run dev
+npm install && npm run dev
 ```
 
 ### **Option 2: Development Environment**
+
 Clone and run the full development environment:
 
-### **1. Install Dependencies**
 ```bash
-pnpm install
-```
-
-### **2. Build SDK**
-```bash
-pnpm sdk:build
-```
-
-### **3. Choose Your Framework**
-
-| Framework | Command | Port | FHEVM Loading | Description |
-|-----------|---------|------|---------------|-------------|
-| ![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB) **React** | `pnpm --filter react-showcase start` | 3000 | CDN Script | CDN-based FHEVM |
-| ![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=next.js&logoColor=white) **Next.js** | `pnpm --filter nextjs-showcase dev` | 3001 | CDN Script | Next.js with CDN |
-| ![Vue.js](https://img.shields.io/badge/Vue.js-35495E?style=flat-square&logo=vue.js&logoColor=4FC08D) **Vue** | `pnpm --filter vue-showcase dev` | 3003 | CDN Script | Vue with CDN |
-| ![Node.js](https://img.shields.io/badge/Node.js-43853D?style=flat-square&logo=node.js&logoColor=white) **Node.js** | `node test-fhevm-operations.js` or `npx tsx src/index.ts` | CLI | **Our FHEVM SDK** | **Proves our SDK works in Node.js!** |
-
-## 🔧 **How FHEVM Loading Works**
-
-### **CDN Script Approach (Used by All Showcases)**
-All showcases use the Zama Relayer SDK CDN:
-
-```html
-<!-- This script is already included in all showcases -->
-<script
-  src="https://cdn.zama.ai/relayer-sdk-js/0.2.0/relayer-sdk-js.umd.cjs"
-  type="text/javascript"
-></script>
-```
-
-**What happens:**
-1. **CDN Script** loads `window.RelayerSDK` globally
-2. **Universal SDK** detects and uses the global instance
-3. **No configuration needed** - works out of the box
-
-### **Why This Approach Works**
-- ✅ **No bundling issues** - CDN loads separately
-- ✅ **Works with all frameworks** - React, Next.js, Vue, Vanilla JS
-- ✅ **No webpack conflicts** - Script loads before app
-- ✅ **Automatic detection** - Universal SDK finds the global instance
-
-## 🎯 **Developer Workflow**
-
-### **Clone and Start Building**
-```bash
-# 1. Clone the repository
+# 1. Clone repository
 git clone https://github.com/your-username/fhevm-react-template.git
 cd fhevm-react-template
 
-# 2. Install all dependencies
+# 2. Install dependencies
 pnpm install
 
-# 3. Build the Universal SDK
+# 3. Build SDK
 pnpm sdk:build
 
-# 4. Choose your development environment
+# 4. Run showcase
+pnpm --filter react-showcase start      # React on :3000
+pnpm --filter nextjs-showcase dev      # Next.js on :3001
+pnpm --filter vue-showcase dev         # Vue on :3003
+pnpm --filter node-showcase start      # Node.js CLI
 ```
 
-### **Development Environments**
+## 📚 **Showcase Documentation**
 
-Each showcase is a complete development environment ready to use:
+Each showcase demonstrates real-world adapter usage:
 
-| Environment | Location | Command | Port | What You Get |
-|-------------|----------|---------|------|--------------|
-| ![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB) **React** | `packages/react-showcase/` | `pnpm --filter react-showcase start` | 3000 | Full React app with FHEVM |
-| ![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=next.js&logoColor=white) **Next.js** | `packages/nextjs-showcase/` | `pnpm --filter nextjs-showcase dev` | 3001 | Full Next.js app with FHEVM |
-| ![Vue.js](https://img.shields.io/badge/Vue.js-35495E?style=flat-square&logo=vue.js&logoColor=4FC08D) **Vue** | `packages/vue-showcase/` | `pnpm --filter vue-showcase dev` | 3003 | Full Vue app with FHEVM |
-| ![Node.js](https://img.shields.io/badge/Node.js-43853D?style=flat-square&logo=node.js&logoColor=white) **Node.js** | `packages/node-showcase/` | `pnpm --filter node-showcase start` | CLI | Node.js FHEVM demo |
-| ![Node.js](https://img.shields.io/badge/SDK-43853D?style=flat-square&logo=node.js&logoColor=white) **SDK** | `packages/fhevm-sdk/` | `pnpm --filter fhevm-sdk build` | N/A | Universal FHEVM SDK |
-| 🔨 **Hardhat** | `packages/hardhat/` | `pnpm --filter hardhat deploy` | N/A | FHE Counter Contract |
+- **[React Showcase](./packages/react-showcase/README.md)** - React hooks usage
+- **[Next.js Showcase](./packages/nextjs-showcase/README.md)** - Next.js with React hooks
+- **[Vue Showcase](./packages/vue-showcase/README.md)** - Vue composables usage
+- **[Node.js Showcase](./packages/node-showcase/README.md)** - Server-side operations
 
-### **How Each Environment Works**
+## 🧪 **Testing**
 
-#### **![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB) React Development Environment**
+All showcases include comprehensive FHEVM contract tests in their respective `test/` directories:
+
+- **`packages/react-showcase/test/`** - React showcase tests
+- **`packages/nextjs-showcase/test/`** - Next.js showcase tests  
+- **`packages/vue-showcase/test/`** - Vue showcase tests
+
+Each test directory contains:
+- **`FHECounter.test.js`** - Counter contract tests (increment, decrement, edge cases)
+- **`FHERatings.test.js`** - Ratings contract tests (card creation, encrypted ratings, public decryption)
+- **`SimpleVoting.test.js`** - Voting contract tests (session creation, encrypted voting, tally reveal)
+
+### **Running Tests**
+
 ```bash
-# Location: packages/react-showcase/
-cd packages/react-showcase
-pnpm start  # Starts React app on http://localhost:3000
+# Run all showcase tests
+pnpm test:showcases
 
-# What's included:
-# - Complete React app with FHEVM integration
-# - CDN script already in public/index.html
-# - Universal SDK already imported
-# - Ready to edit and develop
+# Run tests for a specific showcase
+pnpm test:react      # React showcase tests
+pnpm test:nextjs     # Next.js showcase tests
+pnpm test:vue        # Vue showcase tests
+
+# Run from a specific showcase directory
+cd packages/react-showcase && pnpm test
+cd packages/nextjs-showcase && pnpm test
+cd packages/vue-showcase && pnpm test
+
+# Run Hardhat tests (includes all showcase tests)
+pnpm hardhat:test
 ```
 
-#### **![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=next.js&logoColor=white) Next.js Development Environment**
-```bash
-# Location: packages/nextjs-showcase/
-cd packages/nextjs-showcase
-pnpm dev  # Starts Next.js app on http://localhost:3001
+Tests run in Hardhat's FHEVM mock environment, allowing fast local testing without a live network.
 
-# What's included:
-# - Complete Next.js app with FHEVM integration
-# - CDN script in app/layout.tsx
-# - Universal SDK already imported
-# - Ready to edit and develop
-```
+## 🏆 **Key Features**
 
-#### **![Vue.js](https://img.shields.io/badge/Vue.js-35495E?style=flat-square&logo=vue.js&logoColor=4FC08D) Vue Development Environment**
-```bash
-# Location: packages/vue-showcase/
-cd packages/vue-showcase
-pnpm dev  # Starts Vue app on http://localhost:3003
+### **✅ Framework-Agnostic Core**
+- Single core implementation used by all adapters
+- No framework-specific dependencies in core
+- Easy to extend with new adapters
 
-# What's included:
-# - Complete Vue app with FHEVM integration
-# - CDN script already in index.html
-# - Universal SDK already imported
-# - Ready to edit and develop
-```
+### **✅ Wagmi-like API**
+- Familiar patterns for web3 developers
+- Hooks-based (React) and composables-based (Vue)
+- Clean, intuitive interface
 
-#### **![Node.js](https://img.shields.io/badge/Node.js-43853D?style=flat-square&logo=node.js&logoColor=white) Node.js Development Environment**
-```bash
-# Location: packages/node-showcase/
-cd packages/node-showcase
+### **✅ TypeScript Support**
+- Full type safety across all adapters
+- Excellent IDE support
+- Comprehensive type definitions
 
-# Run complete FHEVM operations test (Direct RelayerSDK)
-node test-fhevm-operations.js  # Real FHEVM operations with increment/decrement/decrypt
+### **✅ Real FHEVM Operations**
+- EIP-712 signature-based decryption
+- Public decryption support
+- Encrypted transaction execution
+- No mocks - all real blockchain interactions
 
-# Or run the SDK showcase (Using your FhevmNode adapter)
-npx tsx src/index.ts  # Same workflow using your SDK
+### **✅ Multiple Demo Scenarios**
+- **Counter Demo:** Increment/decrement with private decryption
+- **Ratings Demo:** Encrypted ratings with public decryption
+- **Voting Demo:** Encrypted voting with tally reveal
 
-# What's included:
-# - Complete Node.js FHEVM demonstration with REAL operations
-# - Real blockchain transactions on Sepolia testnet
-# - Complete increment → decrement → decrypt workflow
-# - EIP-712 decryption with wallet signing
-# - **Proves our FHEVM SDK works in Node.js!**
-# - Both direct RelayerSDK and our SDK adapter
-# - Ready to edit and develop
-```
+## 🎯 **Usage Examples**
 
-#### **![Node.js](https://img.shields.io/badge/SDK-43853D?style=flat-square&logo=node.js&logoColor=white) SDK Development Environment**
-```bash
-# Location: packages/fhevm-sdk/
-cd packages/fhevm-sdk
-pnpm build  # Builds the Universal SDK
+### **React Component**
 
-# What's included:
-# - Universal FHEVM SDK source code
-# - Framework adapters (React, Vue, Node.js, Vanilla)
-# - Core FHEVM functionality
-# - Ready to edit and develop
-```
-
-#### **🔨 Smart Contracts Environment**
-```bash
-# Location: packages/hardhat/
-cd packages/hardhat
-
-# Compile contracts
-npm run compile
-
-# Deploy to local hardhat network
-npm run deploy:hardhat
-
-# Deploy to Sepolia testnet (requires INFURA_API_KEY)
-npm run deploy:sepolia
-
-# What's included:
-# - FHE Counter smart contract
-# - Deployment scripts
-# - Contract ABI and addresses
-# - Ready to deploy and interact with
-```
-
-## 🔨 **Smart Contract Deployment**
-
-### **Deploy FHE Counter Contract**
-```bash
-# Navigate to Hardhat package
-cd packages/hardhat
-
-# Install dependencies (if not already done)
-pnpm install
-
-# Compile contracts
-npm run compile
-
-# Deploy to local hardhat network
-npm run deploy:hardhat
-
-# Deploy to Sepolia testnet (requires INFURA_API_KEY)
-npm run deploy:sepolia
-
-# This will:
-# 1. Compile the FHE Counter contract
-# 2. Deploy to Sepolia testnet
-# 3. Save contract address and ABI
-# 4. Make contract available for showcases
-```
-
-### **Contract Details**
-- **Contract Name:** FHECounter
-- **Network:** Sepolia testnet
-- **Functions:** 
-  - `getCount()` - Returns encrypted count
-  - `increment()` - Increments encrypted count
-  - `decrement()` - Decrements encrypted count
-- **Public Data:** Encrypted count and sum for public decryption
-
-## 📦 **NPX Packages**
-
-We've created NPX packages that let you create FHEVM applications instantly:
-
-### **![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB) React NPX Package**
-```bash
-npx create-fhevm-react my-app
-cd my-app
-npm install
-npm start
-```
-- **📦 Package:** [![npm](https://img.shields.io/npm/v/create-fhevm-react?style=flat-square&logo=npm&logoColor=white&color=red)](https://www.npmjs.com/package/create-fhevm-react) [create-fhevm-react](https://www.npmjs.com/package/create-fhevm-react) | **🔗 Live Demo:** [React Showcase](https://react-showcase-1738.up.railway.app/)
-- **Features:** Complete React app with **Universal FHEVM SDK**, beautiful UI, deployed contract
-- **Tech:** React 18, TypeScript, Create React App, Tailwind CSS
-
-### **![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white) Next.js NPX Package**
-```bash
-npx create-fhevm-nextjs my-app
-cd my-app
-npm install
-npm run dev
-```
-- **📦 Package:** [![npm](https://img.shields.io/npm/v/create-fhevm-nextjs?style=flat-square&logo=npm&logoColor=white&color=red)](https://www.npmjs.com/package/create-fhevm-nextjs) [create-fhevm-nextjs](https://www.npmjs.com/package/create-fhevm-nextjs) | **🔗 Live Demo:** [Next.js Showcase](https://nextjs-showcase-1661.up.railway.app/)
-- **Features:** Complete Next.js app with **Universal FHEVM SDK**, beautiful UI, deployed contract
-- **Tech:** Next.js 15, TypeScript, App Router, Tailwind CSS
-
-### **![Vue.js](https://img.shields.io/badge/Vue.js-35495E?style=for-the-badge&logo=vue.js&logoColor=4FC08D) Vue NPX Package**
-```bash
-npx create-fhevm-vue my-app
-cd my-app
-npm install
-npm run dev
-```
-- **📦 Package:** [![npm](https://img.shields.io/npm/v/create-fhevm-vue?style=flat-square&logo=npm&logoColor=white&color=red)](https://www.npmjs.com/package/create-fhevm-vue) [create-fhevm-vue](https://www.npmjs.com/package/create-fhevm-vue) | **🔗 Live Demo:** [Vue Showcase](https://vue-showcase-2780.up.railway.app/)
-- **Features:** Complete Vue app with **Universal FHEVM SDK**, beautiful UI, deployed contract
-- **Tech:** Vue 3, TypeScript, Vite, Tailwind CSS
-
-### **What Each NPX Package Includes:**
-- ✅ **Universal FHEVM SDK** - **THE SAME SDK** across React, Next.js, and Vue
-- ✅ **Bundled FHEVM SDK** - No external dependencies, works out of the box
-- ✅ **Deployed FHE Counter Contract** - Live on Sepolia testnet
-- ✅ **Beautiful Zama UI** - Professional design system
-- ✅ **Framework-Agnostic Core** - Same FHEVM functionality everywhere
-- ✅ **TypeScript Support** - Full type safety
-- ✅ **Production Ready** - Optimized for deployment
-- ✅ **Complete Hardhat Environment** - Smart contract development included
-
-### **🔧 Universal FHEVM SDK - Same SDK, All Frameworks**
-
-**The key advantage:** All NPX packages use the **exact same Universal FHEVM SDK**:
-
-- **React:** `import { useWallet, useFhevm } from 'fhevm-sdk'`
-- **Next.js:** `import { useWallet, useFhevm } from 'fhevm-sdk'`  
-- **Vue:** `import { useWallet, useFhevm } from 'fhevm-sdk'`
-
-**Why this matters:**
-- ✅ **Consistent API** - Same functions across all frameworks
-- ✅ **No learning curve** - Switch frameworks without relearning FHEVM
-- ✅ **Shared knowledge** - Documentation applies to all frameworks
-- ✅ **Universal compatibility** - One SDK works everywhere
-- ✅ **Future-proof** - Updates benefit all frameworks simultaneously
-
-## 🎯 **Framework Examples**
-
-### **![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB) React Showcase**
-```bash
-cd packages/react-showcase
-pnpm start
-# Open http://localhost:3000
-```
-- **Features:** CDN-based FHEVM, EIP-712 decryption, real contract interactions
-- **Tech:** React 18, TypeScript, Create React App
-- **FHEVM:** CDN import from Zama's CDN
-
-### **![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white) Next.js Showcase**
-```bash
-cd packages/nextjs-showcase
-pnpm dev
-# Open http://localhost:3001
-```
-- **Features:** Local SDK package, provider pattern, EIP-712 decryption
-- **Tech:** Next.js 15, TypeScript, App Router
-- **FHEVM:** Local `@zama-fhe/relayer-sdk` package
-
-### **![Vue.js](https://img.shields.io/badge/Vue.js-35495E?style=for-the-badge&logo=vue.js&logoColor=4FC08D) Vue Showcase**
-```bash
-cd packages/vue-showcase
-pnpm dev
-# Open http://localhost:3003
-```
-- **Features:** CDN-based FHEVM, composition API, EIP-712 decryption
-- **Tech:** Vue 3, TypeScript, Vite
-- **FHEVM:** CDN import from Zama's CDN
-
-### **🖥️ Node.js Showcase**
-```bash
-cd packages/node-showcase
-pnpm start
-# Runs CLI application
-```
-- **Features:** Server-side FHEVM, real blockchain calls, environment variables
-- **Tech:** Node.js, TypeScript, Ethers.js
-- **FHEVM:** Mock implementation (demonstrates concept)
-
-## 🔧 **Universal FHEVM SDK**
-
-### **Core Features**
-- **Framework-agnostic** - Works in any JavaScript environment
-- **Real FHEVM functionality** - EIP-712 decryption, encryption, contract interactions
-- **Clean API** - Intuitive for web3 developers
-- **TypeScript support** - Full type safety
-
-### **Framework Adapters**
-
-#### **React Hooks (Wagmi-like API)**
 ```typescript
-import { useWallet, useFhevm, useContract, useFhevmOperations } from '@fhevm-sdk';
+import { useWallet, useFhevm, useEncrypt, useDecrypt } from '@fhevm-sdk';
 
-function MyComponent() {
-  const { address, isConnected, connect, disconnect } = useWallet();
-  const { fheInstance, isInitialized, initialize } = useFhevm();
-  const { contract, isReady } = useContract(contractAddress, abi);
-  const { encrypt, decrypt, executeTransaction } = useFhevmOperations();
+export default function FheCounter() {
+  const { address, isConnected, connect } = useWallet();
+  const { status, initialize } = useFhevm();
+  const { encrypt } = useEncrypt();
+  const { decrypt } = useDecrypt();
   
-  // Use the hooks...
+  useEffect(() => {
+    if (isConnected && status === 'idle') {
+      initialize();
+    }
+  }, [isConnected, status, initialize]);
+  
+  const handleIncrement = async () => {
+    const encrypted = await encrypt(contractAddress, address, 1);
+    // Execute transaction...
+  };
+  
+  return <div>...</div>;
 }
 ```
 
-#### **Vue Composables**
-```typescript
-import { useWalletVue, useFhevmVue, useContractVue, useFhevmOperationsVue } from '@fhevm-sdk';
+### **Vue Component**
 
-export default {
-  setup() {
-    const { address, isConnected, connect, disconnect } = useWalletVue();
-    const { fheInstance, isInitialized, initialize } = useFhevmVue();
-    const { contract, isReady } = useContractVue(contractAddress, abi);
-    const { encrypt, decrypt, executeTransaction } = useFhevmOperationsVue();
-    
-    return { address, isConnected, connect, disconnect, fheInstance, isInitialized, initialize };
+```vue
+<script setup lang="ts">
+import { useWalletVue, useFhevmVue, useEncryptVue } from '@fhevm-sdk';
+
+const { address, isConnected, connect } = useWalletVue();
+const { status, initialize } = useFhevmVue();
+const { encrypt } = useEncryptVue();
+
+watch(() => isConnected.value, (newVal) => {
+  if (newVal && status.value === 'idle') {
+    initialize();
   }
+});
+</script>
+
+<template>
+  <div>...</div>
+</template>
+```
+
+### **Node.js Script**
+
+```typescript
+import { FhevmNode } from '@fhevm-sdk';
+
+async function main() {
+  const fhevm = new FhevmNode({ rpcUrl, privateKey, chainId });
+await fhevm.initialize();
+
+  const encrypted = await fhevm.encrypt(contractAddress, walletAddress, 1);
+  const contract = fhevm.createContract(contractAddress, abi);
+  await fhevm.executeEncryptedTransaction(contract, 'increment', encrypted);
 }
 ```
-
-#### **Node.js & Vanilla JS**
-```typescript
-import { FhevmNode, FhevmVanilla } from '@fhevm-sdk';
-
-// Node.js
-const fhevm = new FhevmNode();
-await fhevm.initialize();
-
-// Vanilla JS
-const fhevm = new FhevmVanilla();
-await fhevm.initialize();
-```
-
-### **Installation**
-
-**Option 1: NPX Packages (Recommended)**
-```bash
-# Create a new FHEVM project instantly
-npx create-fhevm-react my-app
-npx create-fhevm-nextjs my-app  
-npx create-fhevm-vue my-app
-```
-
-**Option 2: Clone Repository**
-```bash
-# Clone the repository
-git clone https://github.com/your-username/fhevm-react-template.git
-cd fhevm-react-template
-
-# Install dependencies
-pnpm install
-
-# Build the SDK
-pnpm sdk:build
-```
-
 
 ## 📋 **Requirements**
 
@@ -489,56 +493,22 @@ pnpm sdk:build
 - **MetaMask** (for frontend examples)
 - **Sepolia ETH** (for transactions)
 
-## 🎨 **UI Theme**
+## 🔗 **Related Documentation**
 
-All examples use the **Zama theme**:
-- **Primary:** `#FFD208` (Zama Yellow)
-- **Secondary:** `#000000` (Black)
-- **Background:** `#f8f9fa` (Light Grey)
-
-## 🏗️ **Development**
-
-### **Build All**
-```bash
-pnpm sdk:build
-```
-
-### **Start Development**
-```bash
-pnpm start
-```
-
-### **Lint All**
-```bash
-pnpm lint
-```
-
-## 📚 **Documentation**
-
+- [SDK Documentation](./packages/fhevm-sdk/README.md)
 - [React Showcase](./packages/react-showcase/README.md)
 - [Next.js Showcase](./packages/nextjs-showcase/README.md)
 - [Vue Showcase](./packages/vue-showcase/README.md)
 - [Node.js Showcase](./packages/node-showcase/README.md)
-- [FHEVM SDK](./packages/fhevm-sdk/README.md)
 
-## 🎉 **Success Metrics**
+## 📝 **License**
 
-- ✅ **4 Framework Examples** - React, Next.js, Vue, Node.js
-- ✅ **Real FHEVM Interactions** - No mocks, actual blockchain calls
-- ✅ **EIP-712 Authentication** - Proper user decryption
-- ✅ **Live Contract Integration** - Sepolia testnet
-- ✅ **Beautiful UI** - Zama theme across all examples
-- ✅ **Complete Documentation** - READMEs and examples
+MIT License - see LICENSE file for details
 
-## 🏆 **Bounty Submission**
+## 🤝 **Contributing**
 
-This project fulfills all requirements for the **Zama Universal FHEVM SDK Bounty**:
+Contributions are welcome! Please see our contributing guidelines for more information.
 
-- ✅ **Framework-agnostic SDK** - Works in any JavaScript environment
-- ✅ **Real FHEVM functionality** - EIP-712 decryption, encryption, contract interactions
-- ✅ **Multiple environment examples** - React, Next.js, Vue, Node.js
-- ✅ **Wagmi-like API** - Intuitive for web3 developers
-- ✅ **Clean, reusable components** - Modular SDK structure
-- ✅ **Complete documentation** - Clear setup and usage instructions
+---
 
-**Ready for submission!** 🚀
+**Built with Privacy for the Zama Universal FHEVM SDK Bounty**

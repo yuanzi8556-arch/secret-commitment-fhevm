@@ -8,7 +8,6 @@ import {
   getFheInstance, 
   decryptValue,
   createEncryptedInput,
-  requestUserDecryption,
   publicDecrypt
 } from '../core/index.js';
 import { ethers } from 'ethers';
