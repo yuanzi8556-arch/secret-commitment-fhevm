@@ -18,7 +18,7 @@ async function initializeBrowserFheInstance() {
   let sdk = (window as any).RelayerSDK || (window as any).relayerSDK;
   
   if (!sdk) {
-    throw new Error('RelayerSDK not loaded. Please include the script tag in your HTML:\n<script src="https://cdn.zama.ai/relayer-sdk-js/0.2.0/relayer-sdk-js.umd.cjs"></script>');
+    throw new Error('RelayerSDK not loaded. Please include the script tag in your HTML:\n<script src="https://cdn.zama.org/relayer-sdk-js/0.2.0/relayer-sdk-js.umd.cjs"></script>');
   }
 
   const { initSDK, createInstance, SepoliaConfig } = sdk;
