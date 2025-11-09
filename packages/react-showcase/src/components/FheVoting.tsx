@@ -260,7 +260,7 @@ const FheVoting = ({
 
   // Use adapter hooks - provides automatic state management and error handling
   const { encrypt, isEncrypting, error: encryptError } = useEncrypt();
-  const { decryptMultiple, isDecrypting: isDecryptingFromHook, error: decryptError } = useDecrypt();
+  const { decryptMultiple, isDecrypting: isDecryptingFromHook } = useDecrypt();
 
   // Load all voting sessions
   const loadSessions = useCallback(async () => {
