@@ -8,6 +8,7 @@ packages/*/.env
 packages/*/.turbo
 packages/*/coverage
 packages/*/.next
+packages/hardhat/artifacts/build-info
 tmp*
 .vscode
 
