@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
+import { getWalletProvider } from '@/utils/wallet';
 
 interface MyCommitmentProps {
   fhevmInstance: any;
@@ -24,9 +25,10 @@ export default function MyCommitment({
   useEffect(() => {
     const fetchTimestamp = async () => {
       try {
-        if (!window.ethereum) return;
+        const walletProvider = getWalletProvider();
+        if (!walletProvider) return;
 
-        const provider = new ethers.BrowserProvider(window.ethereum);
+        const provider = new ethers.BrowserProvider(walletProvider);
         const signer = await provider.getSigner();
         const contract = new ethers.Contract(
           contractAddress,
@@ -50,11 +52,12 @@ export default function MyCommitment({
     setError(null);
 
     try {
-      if (!window.ethereum) {
+      const walletProvider = getWalletProvider();
+      if (!walletProvider) {
         throw new Error('No Ethereum provider found');
       }
 
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const provider = new ethers.BrowserProvider(walletProvider);
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(
         contractAddress,

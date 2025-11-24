@@ -7,6 +7,7 @@ import { ethers } from 'ethers';
 import ContractDisplay from '@/components/ContractDisplay';
 import CommitmentForm from '@/components/CommitmentForm';
 import MyCommitment from '@/components/MyCommitment';
+import { getWalletProvider } from '@/utils/wallet';
 
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x0000000000000000000000000000000000000000';
 
@@ -34,8 +35,10 @@ export default function DAppPage() {
         
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        if (!window.ethereum) {
-          throw new Error('No wallet detected, please install MetaMask');
+        // Check for any wallet provider (MetaMask, OKX, etc.)
+        const provider = getWalletProvider();
+        if (!provider) {
+          throw new Error('No wallet detected, please install a Web3 wallet (MetaMask, OKX, etc.)');
         }
         
         console.log('🔄 Checking relayerSDK...');
@@ -51,9 +54,11 @@ export default function DAppPage() {
         console.log('🔄 Creating FHEVM instance...');
         
         // FHEVM v0.9 Sepolia configuration
+        // Use the detected provider (supports MetaMask, OKX, etc.)
+        const walletProvider = getWalletProvider();
         const config = {
           chainId: 11155111,
-          network: window.ethereum,
+          network: walletProvider,
           aclContractAddress: '0xf0Ffdc93b7E186bC2f8CB3dAA75D86d1930A433D',
           kmsContractAddress: '0xbE0E383937d564D7FF0BC3b46c51f0bF8d5C311A',
           inputVerifierContractAddress: '0xBBC1fFCdc7C316aAAd72E807D9b0272BE8F84DA0',
@@ -81,15 +86,17 @@ export default function DAppPage() {
 
   // Check if user has submitted commitment
   useEffect(() => {
-    if (!isConnected || !address || !window.ethereum) return;
+    const provider = getWalletProvider();
+    if (!isConnected || !address || !provider) return;
 
     const checkCommitmentStatus = async () => {
       setIsCheckingStatus(true);
       try {
-        if (!window.ethereum) {
+        const walletProvider = getWalletProvider();
+        if (!walletProvider) {
           throw new Error('No Ethereum provider found');
         }
-        const provider = new ethers.BrowserProvider(window.ethereum);
+        const provider = new ethers.BrowserProvider(walletProvider);
         const signer = await provider.getSigner();
         const contract = new ethers.Contract(
           CONTRACT_ADDRESS,

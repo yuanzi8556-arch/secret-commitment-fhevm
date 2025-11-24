@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import { ethers } from 'ethers';
+import { getWalletProvider } from '@/utils/wallet';
 
 interface CommitmentFormProps {
   fhevmInstance: any;
@@ -45,11 +46,12 @@ export default function CommitmentForm({
 
       // Step 2: Submit to contract
       setCurrentStep('submitting');
-      if (!window.ethereum) {
+      const walletProvider = getWalletProvider();
+      if (!walletProvider) {
         throw new Error('No Ethereum provider found');
       }
 
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const provider = new ethers.BrowserProvider(walletProvider);
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(
         contractAddress,
