@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ethers } from 'ethers';
+import { useWalletClient } from 'wagmi';
+import { ethers, BrowserProvider } from 'ethers';
 import { getWalletProvider } from '@/utils/wallet';
 
 interface MyCommitmentProps {
@@ -15,6 +16,7 @@ export default function MyCommitment({
   contractAddress,
   userAddress,
 }: MyCommitmentProps) {
+  const { data: walletClient } = useWalletClient();
   const [decryptedAmount, setDecryptedAmount] = useState<string | null>(null);
   const [timestamp, setTimestamp] = useState<number | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -25,10 +27,9 @@ export default function MyCommitment({
   useEffect(() => {
     const fetchTimestamp = async () => {
       try {
-        const walletProvider = getWalletProvider();
-        if (!walletProvider) return;
+        if (!walletClient) return;
 
-        const provider = new ethers.BrowserProvider(walletProvider);
+        const provider = new BrowserProvider(walletClient as any);
         const signer = await provider.getSigner();
         const contract = new ethers.Contract(
           contractAddress,
@@ -52,12 +53,11 @@ export default function MyCommitment({
     setError(null);
 
     try {
-      const walletProvider = getWalletProvider();
-      if (!walletProvider) {
-        throw new Error('No Ethereum provider found');
+      if (!walletClient) {
+        throw new Error('Wallet not connected. Please connect your wallet first.');
       }
 
-      const provider = new ethers.BrowserProvider(walletProvider);
+      const provider = new BrowserProvider(walletClient as any);
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(
         contractAddress,

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useAccount } from 'wagmi';
-import { ethers } from 'ethers';
+import { useAccount, useWalletClient } from 'wagmi';
+import { ethers, BrowserProvider } from 'ethers';
 import { getWalletProvider } from '@/utils/wallet';
 
 interface CommitmentFormProps {
@@ -17,6 +17,7 @@ export default function CommitmentForm({
   onSuccess,
 }: CommitmentFormProps) {
   const { address } = useAccount();
+  const { data: walletClient } = useWalletClient();
   const [amount, setAmount] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,12 +47,13 @@ export default function CommitmentForm({
 
       // Step 2: Submit to contract
       setCurrentStep('submitting');
-      const walletProvider = getWalletProvider();
-      if (!walletProvider) {
-        throw new Error('No Ethereum provider found');
+      
+      if (!walletClient) {
+        throw new Error('Wallet not connected. Please connect your wallet first.');
       }
 
-      const provider = new ethers.BrowserProvider(walletProvider);
+      // Get provider from walletClient
+      const provider = new BrowserProvider(walletClient as any);
       const signer = await provider.getSigner();
       const contract = new ethers.Contract(
         contractAddress,
