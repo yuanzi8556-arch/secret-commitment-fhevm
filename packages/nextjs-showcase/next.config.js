@@ -32,10 +32,11 @@ const nextConfig = {
       };
     }
     
-    // Suppress specific warnings
+    // Suppress specific warnings for optional dependencies
     config.ignoreWarnings = [
       { module: /@metamask\/sdk/ },
       { module: /@react-native-async-storage/ },
+      { module: /pino-pretty/ },
     ];
     
     return config;
