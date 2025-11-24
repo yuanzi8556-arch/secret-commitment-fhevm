@@ -86,6 +86,9 @@ export default function DAppPage() {
     const checkCommitmentStatus = async () => {
       setIsCheckingStatus(true);
       try {
+        if (!window.ethereum) {
+          throw new Error('No Ethereum provider found');
+        }
         const provider = new ethers.BrowserProvider(window.ethereum);
         const signer = await provider.getSigner();
         const contract = new ethers.Contract(
