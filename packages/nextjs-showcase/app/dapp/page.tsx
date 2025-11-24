@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useAccount } from 'wagmi';
+import { useAccount, useConnectorClient } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { ethers } from 'ethers';
 import ContractDisplay from '@/components/ContractDisplay';
@@ -12,7 +12,8 @@ import { getWalletProvider } from '@/utils/wallet';
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x0000000000000000000000000000000000000000';
 
 export default function DAppPage() {
-  const { isConnected, address } = useAccount();
+  const { isConnected, address, connector } = useAccount();
+  const { data: connectorClient } = useConnectorClient();
   const [fhevmInstance, setFhevmInstance] = useState<any>(null);
   const [isInitializing, setIsInitializing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +24,7 @@ export default function DAppPage() {
 
   // Initialize FHEVM
   useEffect(() => {
-    if (!isConnected || !address || fhevmInstance || isInitializingRef.current) return;
+    if (!isConnected || !address || !connectorClient || fhevmInstance || isInitializingRef.current) return;
 
     const initFhevm = async () => {
       isInitializingRef.current = true;
@@ -35,8 +36,20 @@ export default function DAppPage() {
         
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Check for any wallet provider (MetaMask, OKX, etc.)
-        const provider = getWalletProvider();
+        // Get provider from Wagmi connector
+        let provider = getWalletProvider();
+        
+        // If getWalletProvider fails, try to get from connector
+        if (!provider && connector) {
+          try {
+            console.log('🔄 Getting provider from connector...');
+            // @ts-ignore - connector.getProvider() is available on most connectors
+            provider = await connector.getProvider();
+          } catch (e) {
+            console.log('⚠️ Failed to get provider from connector, using window.ethereum fallback');
+          }
+        }
+        
         if (!provider) {
           throw new Error('No wallet detected, please install a Web3 wallet (MetaMask, OKX, etc.)');
         }
@@ -55,10 +68,9 @@ export default function DAppPage() {
         
         // FHEVM v0.9 Sepolia configuration
         // Use the detected provider (supports MetaMask, OKX, etc.)
-        const walletProvider = getWalletProvider();
         const config = {
           chainId: 11155111,
-          network: walletProvider,
+          network: provider,
           aclContractAddress: '0xf0Ffdc93b7E186bC2f8CB3dAA75D86d1930A433D',
           kmsContractAddress: '0xbE0E383937d564D7FF0BC3b46c51f0bF8d5C311A',
           inputVerifierContractAddress: '0xBBC1fFCdc7C316aAAd72E807D9b0272BE8F84DA0',
@@ -82,7 +94,7 @@ export default function DAppPage() {
     };
 
     initFhevm();
-  }, [isConnected, address]);
+  }, [isConnected, address, connectorClient, connector]);
 
   // Check if user has submitted commitment
   useEffect(() => {
