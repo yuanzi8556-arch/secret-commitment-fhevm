@@ -19,7 +19,7 @@ const nextConfig = {
       },
     ];
   },
-  // Ignore React Native specific dependencies
+  // Ignore React Native specific dependencies and suppress warnings
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
@@ -31,6 +31,13 @@ const nextConfig = {
         tls: false,
       };
     }
+    
+    // Suppress specific warnings
+    config.ignoreWarnings = [
+      { module: /@metamask\/sdk/ },
+      { module: /@react-native-async-storage/ },
+    ];
+    
     return config;
   },
 }
