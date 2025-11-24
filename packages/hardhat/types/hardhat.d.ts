@@ -42,6 +42,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.FHECounter__factory>;
     getContractFactory(
+      name: "LoanCommitment",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.LoanCommitment__factory>;
+    getContractFactory(
       name: "ReviewCardsFHE",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ReviewCardsFHE__factory>;
@@ -86,6 +90,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.FHECounter>;
     getContractAt(
+      name: "LoanCommitment",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.LoanCommitment>;
+    getContractAt(
       name: "ReviewCardsFHE",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -125,6 +134,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.FHECounter>;
     deployContract(
+      name: "LoanCommitment",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.LoanCommitment>;
+    deployContract(
       name: "ReviewCardsFHE",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ReviewCardsFHE>;
@@ -168,6 +181,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.FHECounter>;
+    deployContract(
+      name: "LoanCommitment",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.LoanCommitment>;
     deployContract(
       name: "ReviewCardsFHE",
       args: any[],

@@ -20,6 +20,8 @@ export type { IInputVerifier } from "./@fhevm/solidity/lib/Impl.sol/IInputVerifi
 export { IInputVerifier__factory } from "./factories/@fhevm/solidity/lib/Impl.sol/IInputVerifier__factory";
 export type { FHECounter } from "./contracts/FHECounter";
 export { FHECounter__factory } from "./factories/contracts/FHECounter__factory";
+export type { LoanCommitment } from "./contracts/LoanCommitment";
+export { LoanCommitment__factory } from "./factories/contracts/LoanCommitment__factory";
 export type { ReviewCardsFHE } from "./contracts/ReviewCardsFHE_uint32.sol/ReviewCardsFHE";
 export { ReviewCardsFHE__factory } from "./factories/contracts/ReviewCardsFHE_uint32.sol/ReviewCardsFHE__factory";
 export type { SimpleVoting_uint32 } from "./contracts/SimpleVoting_uint32";

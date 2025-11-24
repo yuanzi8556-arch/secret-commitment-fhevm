@@ -10,6 +10,9 @@ packages/*/coverage
 tmp*
 .vscode
 
+# Internal development guide (not for public)
+WINNING_FORMULA.md
+
 # NPX package folders (these are published separately as npm packages)
 create-fhevm-nextjs/
 create-fhevm-react/

@@ -27,6 +27,7 @@ export async function initializeFheInstance(options?: { rpcUrl?: string }) {
  * Initialize FHEVM instance for browser environment
  */
 async function initializeBrowserFheInstance() {
+  console.log('🚀 initializeBrowserFheInstance called - DEBUG CHECK');
   if (typeof window === 'undefined' || !window.ethereum) {
     throw new Error('Ethereum provider not found. Please install MetaMask or connect a wallet.');
   }
@@ -38,13 +39,24 @@ async function initializeBrowserFheInstance() {
     throw new Error('RelayerSDK not loaded. Please include the script tag in your HTML:\n<script src="https://cdn.zama.org/relayer-sdk-js/0.3.0-5/relayer-sdk-js.umd.cjs"></script>');
   }
 
-  const { initSDK, createInstance, SepoliaConfig } = sdk;
+  // DEBUG: Log all available SDK exports
+  console.log('🔍 Available SDK exports:', Object.keys(sdk));
+  console.log('🔍 Full SDK object:', sdk);
+
+  const { initSDK, createInstance } = sdk;
 
   // Initialize SDK with CDN
   await initSDK();
     console.log('✅ FHEVM SDK initialized with CDN');
   
-  const config = { ...SepoliaConfig, network: window.ethereum };
+  // Use Zama's official Sepolia contract addresses for FHEVM v0.9
+  const config = { 
+    chainId: 11155111,
+    network: window.ethereum,
+    aclContractAddress: "0xf0Ffdc93b7E186bC2f8CB3dAA75D86d1930A433D",
+    kmsContractAddress: "0xbE0E383937d564D7FF0BC3b46c51f0bF8d5C311A",
+    gatewayUrl: "https://gateway.sepolia.zama.ai/",
+  };
   
   try {
     fheInstance = await createInstance(config);
@@ -65,7 +77,7 @@ async function initializeNodeFheInstance(rpcUrl?: string) {
     
     // Use eval to prevent webpack from analyzing these imports
     const relayerSDKModule = await eval('import("@zama-fhe/relayer-sdk/node")');
-    const { createInstance, SepoliaConfig, generateKeypair } = relayerSDKModule;
+    const { createInstance, generateKeypair } = relayerSDKModule;
     
     // Create an EIP-1193 compatible provider for Node.js
     const ethersModule = await eval('import("ethers")');
@@ -96,8 +108,8 @@ async function initializeNodeFheInstance(rpcUrl?: string) {
     };
     
     const config = { 
-      ...SepoliaConfig, 
-      network: eip1193Provider 
+      network: eip1193Provider,
+      chainId: 11155111,
     };
     
     fheInstance = await createInstance(config);
